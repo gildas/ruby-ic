@@ -40,5 +40,6 @@ Gemfile.lock
 .rvmrc
 
 # RubyMine files
+dictionaries/
 workspace.xml
 tasks.xml
