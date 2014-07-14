@@ -1,7 +1,5 @@
-require "ruby/ic/version"
+require 'ic/version'
 
-module Ruby
-  module Ic
-    # Your code goes here...
-  end
+module Ic
+  # Your code goes here...
 end
