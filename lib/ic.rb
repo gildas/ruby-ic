@@ -1,5 +1,5 @@
 require 'ic/version'
+require 'ic/session'
 
 module Ic
-  # Your code goes here...
 end
