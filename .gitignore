@@ -9,6 +9,7 @@ mkmf.log
 /coverage/
 /InstalledFiles
 /pkg/
+/spec/*.json
 /spec/reports/
 /test/tmp/
 /test/version_tmp/
