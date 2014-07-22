@@ -45,8 +45,8 @@ module Ic
         request.body = data.to_json
         response = transport.request(request)
       rescue
-        puts $!
-        throw $!
+        puts "Error while connecting: #{$!}"
+        raise
       end
 
       puts "Response #{response.code} #{response.message}: #{response.body}"
@@ -58,7 +58,7 @@ module Ic
           self
         when Net::HTTPSuccess
         else
-          throw response
+          raise response
       end
 
     end
