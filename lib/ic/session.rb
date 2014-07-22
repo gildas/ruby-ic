@@ -81,11 +81,14 @@ module Ic
           error = JSON.parse(response.body)
           raise RuntimeError, error
       end
-
     end
 
     def connected?
       ! @id.nil?
+    end
+
+    def to_s
+      connected? ? "Session #{@id} connected to #{@server} as #{@user}" : ""
     end
   end
 end
