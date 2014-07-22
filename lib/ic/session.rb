@@ -17,6 +17,7 @@ module Ic
       raise MissingArgumentError, 'password' unless @password = options[:password]
 
       @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}")
+      @token       = nil
       @id          = nil
     end
 
@@ -41,6 +42,7 @@ module Ic
       begin
         request = Net::HTTP::Post.new(@uri.path + '/icws/connection')
         request['Accept-Language'] = @language
+        request['ININ-ICWS-CSRF-Token'] = @token if @token
         request.content_type = 'application/json'
         request.body = data.to_json
         response = transport.request(request)
