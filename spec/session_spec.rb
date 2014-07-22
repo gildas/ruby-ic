@@ -9,8 +9,8 @@ describe 'Session' do
 
     it 'should connect' do
       session = Ic::Session.connect(@config)
-      session.should be
-      session.connected?.should be_true
+      expect(session).to be_truthy
+      expect(session.connected?).to be true
     end
   end
 end
