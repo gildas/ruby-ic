@@ -54,10 +54,11 @@ module Ic
       puts "Response #{response.code} #{response.message}: #{response.body}"
       case response
         when Net::HTTPBadRequest
-          # The response can be something like: {"errorCode":-2147221503,"message":"The authentication process failed."}
+          # The response can be something like:
+          #   {"errorId":"error.request.connection.authenticationFailure","errorCode":-2147221503,"message":"The authentication process failed."}
           error = JSON.parse(response.body)
-          raise AuthenticationError if error['errorCode'] == 0x80040001 # -2147221503
-          raise response
+          raise AuthenticationError if error['errorId'] == "error.request.connection.authenticationFailure"
+          raise RuntimeError, response
         when Net::HTTPRedirection
         when Net::HTTPServiceUnavailable
           json = JSON.parse(response.body)
