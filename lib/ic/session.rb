@@ -5,17 +5,19 @@ require 'ic/exceptions'
 
 module Ic
   class Session
-    attr_reader :id,  :application_name, :server, :port, :user, :scheme
+    attr_reader :id, :application_name, :server, :port, :user, :scheme, :language
 
     def initialize(options = {})
-      @application_name = options[:application_name] || 'icws client'
-      @server           = options[:server]           || 'localhost'
-      @scheme           = options[:scheme]           || 'https'
-      @port             = options[:port]             || 8019
-      @user             = options[:user]     #|| throw new ArgumentError('user')
-      @password         = options[:password] #|| throw new ArgumentError('password')
-      @uri              = URI.parse("#{@scheme}://#{@server}:#{@port}/")
-      @id               = nil
+      @application = options[:application] || 'icws client'
+      @server      = options[:server]           || 'localhost'
+      @scheme      = options[:scheme]           || 'https'
+      @port        = options[:port]             || 8019
+      @language    = options[:language]         || 'en-us'
+      raise MissingArgumentError, 'user'     unless @user     = options[:user]
+      raise MissingArgumentError, 'password' unless @password = options[:password]
+
+      @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}/")
+      @id          = nil
     end
 
     def self.connect(options = {})
@@ -25,25 +27,23 @@ module Ic
     def connect
       data = {
       '__type'          => 'urn:inin.com:connection:icAuthConnectionRequestSettings',
-      'applicationName' => @application_name,
+      'applicationName' => @application,
       'userID'          => @user,
       'password'        => @password,
       }
       transport = Net::HTTP.new(@uri.host, @uri.port)
-      transport.use_ssl = @scheme == 'https'
+      transport.use_ssl = @scheme.downcase == 'https'
       transport.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      transport.open_timeout = 5
       transport.set_debug_output($stdout)
       puts "Connecting to #{@uri} as #{@user}..."
       puts data.to_json
       begin
         request = Net::HTTP::Post.new(@uri.path + '/icws/connection')
-        request['Accept-Language'] = 'en-us'
-        #request.content_type = 'application/json'
-        #request.body = data.to_json
-        request.set_form_data(data)
-        # Add Accept-Language: en-US (or other values)
+        request['Accept-Language'] = @language
+        request.content_type = 'application/json'
+        request.body = data.to_json
         response = transport.request(request)
-        #response = Net::HTTP.post_form(session.uri, http_options)
       rescue
         puts $!
         throw $!
