@@ -64,9 +64,12 @@ module Ic
           json = JSON.parse(response.body)
           puts JSON.pretty_generate json
           self
+        when Net::HTTPUnauthorized
+          puts "Authorization expired" #TODO: Add some reconnection code
         when Net::HTTPSuccess
         else
-          raise response
+          error = JSON.parse(response.body)
+          raise RuntimeError, error
       end
 
     end
