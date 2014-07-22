@@ -16,7 +16,7 @@ module Ic
       raise MissingArgumentError, 'user'     unless @user     = options[:user]
       raise MissingArgumentError, 'password' unless @password = options[:password]
 
-      @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}/")
+      @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}")
       @id          = nil
     end
 
