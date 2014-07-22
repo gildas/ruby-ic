@@ -67,6 +67,16 @@ module Ic
         when Net::HTTPUnauthorized
           puts "Authorization expired" #TODO: Add some reconnection code
         when Net::HTTPSuccess
+          puts "Success!!!"
+
+          @cookie   = response['Set-Cookie']           if response['Set-Cookie']
+          @id       = response['ININ-ICWS-Session-ID'] if response['ININ-ICWS-Session-ID']
+          @token    = response['ININ-ICWS-CSRF-Token'] if response['ININ-ICWS-CSRF-Token']
+          @password = nil
+          puts "Cookie    : \"#{@cookie}\""
+          puts "Session Id: \"#{@id}\""
+          puts "Token     : \"#{@token}\""
+          self
         else
           error = JSON.parse(response.body)
           raise RuntimeError, error
