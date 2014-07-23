@@ -22,5 +22,13 @@ describe 'Session' do
       version = session.server_version
       expect(version).to_not be nil
     end
+
+    it 'should give a feature list' do
+      session = Ic::Session.new(@config)
+      expect(session).to be_truthy
+      features = session.server_features
+      expect(features).to be_truthy
+      expect(features).to be_kind_of(Enumerable)
+    end
   end
 end

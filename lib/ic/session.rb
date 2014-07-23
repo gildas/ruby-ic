@@ -99,9 +99,25 @@ module Ic
     end
 
     def server_version
-      response = http :get, :path => "/connection/version"
+      response = http :get, :path => '/connection/version'
       if response.ok?
         JSON.parse(response.body).keys2sym
+      else
+        if response.body
+          error = JSON.parse(response.body)
+          raise RuntimeError, error
+        else
+          raise RuntimeError, response.status
+        end
+      end
+    end
+
+    def server_features
+      response = http :get, :path => '/connection/features'
+      if response.ok?
+        data = JSON.parse(response.body)
+        raise ArgumentError, "featureInfoList" if ! data['featureInfoList']
+        data['featureInfoList']
       else
         if response.body
           error = JSON.parse(response.body)
