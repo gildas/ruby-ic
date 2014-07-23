@@ -59,16 +59,10 @@ module Ic
       end
 
       if response.ok?
-        if response.header['set-cookie']
-          response.header['set-cookie'].each do |value|
-            puts "Cookie: #{value}"
-          end
-        end
+        # cookies are managed automatically by the httpclient gem
         puts "Body: [#{response.body}]"
-        @cookie   = response.header['set-cookie'].first           if response.header['set-cookie']
-        @id       = response.header['ININ-ICWS-Session-ID'].first if response.header['ININ-ICWS-Session-ID']
-        @token    = response.header['ININ-ICWS-CSRF-Token'].first if response.header['ININ-ICWS-CSRF-Token']
-        puts "Cookie    : \"#{@cookie}\""
+        @id    = response.header['ININ-ICWS-Session-ID'].first if response.header['ININ-ICWS-Session-ID']
+        @token = response.header['ININ-ICWS-CSRF-Token'].first if response.header['ININ-ICWS-CSRF-Token']
         puts "Session Id: \"#{@id}\""
         puts "Token     : \"#{@token}\""
         self
