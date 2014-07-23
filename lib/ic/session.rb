@@ -8,7 +8,7 @@ module Ic
   class Session
     MAX_REDIRECTIONS = 5
 
-    attr_reader :id, :application_name, :server, :port, :user, :scheme, :language
+    attr_reader :id, :application, :server, :port, :user, :scheme, :language
 
     def initialize(options = {})
       @application = options[:application]      || 'icws client'
