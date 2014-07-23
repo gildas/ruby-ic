@@ -5,7 +5,7 @@ describe 'Session' do
   context 'valid server and credentials' do
     before do
       @config = load_config('spec/login.json')
-      @config[:debug] = true
+      #@config[:debug] = true
     end
 
     it 'should connect and disconnect' do
@@ -21,7 +21,6 @@ describe 'Session' do
       expect(session).to be_truthy
       version = session.server_version
       expect(version).to_not be nil
-      puts "Version: #{version}"
     end
   end
 end

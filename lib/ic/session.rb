@@ -42,13 +42,11 @@ module Ic
       server = @server
       while true do
         @uri = URI.parse("#{@scheme}://#{server}:#{@port}")
-        puts "Connecting to #{@uri} as #{@user}..."
-        puts data.to_json
         response = http :post, :path => '/connection', :data => data
         if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
-          puts "We need to check other servers"
+          STDERR.puts "We need to check other servers"
           data = JSON.parse(response.body)
-          puts JSON.pretty_generate data
+          STDERR.puts JSON.pretty_generate data
           server = data['alternateHostList'].first
           raise TooManyRedirectionsError if alternate_server_index >= MAX_REDIRECTIONS
           alternate_server_index += 1
@@ -60,11 +58,8 @@ module Ic
 
       if response.ok?
         # cookies are managed automatically by the httpclient gem
-        puts "Body: [#{response.body}]"
         @id    = response.header['ININ-ICWS-Session-ID'].first if response.header['ININ-ICWS-Session-ID']
         @token = response.header['ININ-ICWS-CSRF-Token'].first if response.header['ININ-ICWS-CSRF-Token']
-        puts "Session Id: \"#{@id}\""
-        puts "Token     : \"#{@token}\""
         self
       else
         case response.status
@@ -129,7 +124,6 @@ module Ic
     def http(verb, options = {})
       raise MissingArgumentError, ':path' if !options[:path]
       url = "#{@uri}/icws#{options[:path]}"
-      puts "URL: #{url}"
       headers = {}
       headers['Accept-Language']      = options[:language] || @language
       headers['ININ-ICWS-CSRF-Token'] = options[:token]    || @token
@@ -150,7 +144,7 @@ module Ic
         else raise ArgumentError, 'verb'
       end
       @client.debug_dev = nil if options[:debug] || $DEBUG
-      puts "Response: #{response.inspect}"
+      STDERR.puts "Response: #{response.inspect}" if !response.ok?
       response
     end
   end
