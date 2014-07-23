@@ -31,6 +31,7 @@ module Ic
     end
 
     def connect
+      disconnect if connected?
       data = {
       '__type'          => 'urn:inin.com:connection:icAuthConnectionRequestSettings',
       'applicationName' => @application,
@@ -92,7 +93,8 @@ module Ic
     end
 
     def disconnect
-      response = http :delete, :path => "/connection/#{@id}"
+      return if ! connected?
+      response = http :delete, :path => "/#{@id}/connection"
       if response.ok?
         @cookie = nil
         @id     = nil
