@@ -128,6 +128,7 @@ module Ic
       headers['Accept-Language']      = options[:language] || @language
       headers['ININ-ICWS-CSRF-Token'] = options[:token]    || @token
       @client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE # Only if turned on, we should verify by default
+      @client.ssl_config.verify_callback = @client.ssl_config.method(:sample_verify_callback)
       # TODO: Timeout
 
       body = nil
