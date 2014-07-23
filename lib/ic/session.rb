@@ -1,6 +1,6 @@
-require 'net/http'
-require 'net/https'
 require 'json'
+require 'httpclient'
+require 'ic/http_statuses'
 require 'ic/exceptions'
 
 module Ic
@@ -8,7 +8,7 @@ module Ic
     attr_reader :id, :application_name, :server, :port, :user, :scheme, :language
 
     def initialize(options = {})
-      @application = options[:application] || 'icws client'
+      @application = options[:application]      || 'icws client'
       @server      = options[:server]           || 'localhost'
       @scheme      = options[:scheme]           || 'https'
       @port        = options[:port]             || 8019
@@ -16,6 +16,8 @@ module Ic
       raise MissingArgumentError, 'user'     unless @user     = options[:user]
       raise MissingArgumentError, 'password' unless @password = options[:password]
 
+      proxy        = ENV['HTTP_PROXY'] || options[:proxy]
+      @client      = HTTPClient.new(proxy)
       @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}")
       @token       = nil
       @id          = nil
@@ -32,54 +34,54 @@ module Ic
       'userID'          => @user,
       'password'        => @password,
       }
-      transport = Net::HTTP.new(@uri.host, @uri.port)
-      transport.use_ssl = @scheme.downcase == 'https'
-      transport.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      transport.open_timeout = 5
-      transport.set_debug_output($stdout)
       puts "Connecting to #{@uri} as #{@user}..."
       puts data.to_json
       begin
-        request = Net::HTTP::Post.new(@uri.path + '/icws/connection')
-        request['Accept-Language'] = @language
-        request['ININ-ICWS-CSRF-Token'] = @token if @token
-        request.content_type = 'application/json'
-        request.body = data.to_json
-        response = transport.request(request)
+        response = http :post, :path => '/connection', :data => data
       rescue
         puts "Error while connecting: #{$!}"
         raise
       end
 
-      puts "Response #{response.code} #{response.message}: #{response.body}"
-      case response
-        when Net::HTTPBadRequest
-          # The response can be something like:
-          #   {"errorId":"error.request.connection.authenticationFailure","errorCode":-2147221503,"message":"The authentication process failed."}
-          error = JSON.parse(response.body)
-          raise AuthenticationError if error['errorId'] == "error.request.connection.authenticationFailure"
-          raise RuntimeError, response
-        when Net::HTTPRedirection
-        when Net::HTTPServiceUnavailable
-          json = JSON.parse(response.body)
-          puts JSON.pretty_generate json
-          self
-        when Net::HTTPUnauthorized
-          puts "Authorization expired" #TODO: Add some reconnection code
-        when Net::HTTPSuccess
-          puts "Success!!!"
+      puts "Response: #{response.inspect}"
+      if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
+        puts "We need to check other servers"
+        json = JSON.parse(response.body)
+        puts JSON.pretty_generate json
+      end
 
-          @cookie   = response['Set-Cookie']           if response['Set-Cookie']
-          @id       = response['ININ-ICWS-Session-ID'] if response['ININ-ICWS-Session-ID']
-          @token    = response['ININ-ICWS-CSRF-Token'] if response['ININ-ICWS-CSRF-Token']
-          @password = nil
-          puts "Cookie    : \"#{@cookie}\""
-          puts "Session Id: \"#{@id}\""
-          puts "Token     : \"#{@token}\""
-          self
-        else
-          error = JSON.parse(response.body)
-          raise RuntimeError, error
+      if response.ok?
+        if response.header['set-cookie']
+          response.header['set-cookie'].each do |value|
+            puts "Cookie: #{value}"
+          end
+        end
+        puts "Body: [#{response.body}]"
+        @cookie   = response.header['set-cookie'].first           if response.header['set-cookie']
+        @id       = response.header['ININ-ICWS-Session-ID'].first if response.header['ININ-ICWS-Session-ID']
+        @token    = response.header['ININ-ICWS-CSRF-Token'].first if response.header['ININ-ICWS-CSRF-Token']
+        @password = nil
+        puts "Cookie    : \"#{@cookie}\""
+        puts "Session Id: \"#{@id}\""
+        puts "Token     : \"#{@token}\""
+        self
+      else
+        case response.status
+          when HTTP::Status::BAD_REQUEST
+            # The response can be something like:
+            #   {"errorId":"error.request.connection.authenticationFailure","errorCode":-2147221503,"message":"The authentication process failed."}
+            error = JSON.parse(response.body)
+            raise AuthenticationError if error['errorId']   == 'error.request.connection.authenticationFailure'
+            raise AuthenticationError if error['errorCode'] == -2147221503
+            raise RuntimeError, response
+          when HTTP::Status::UNAUTHORIZED
+            error = JSON.parse(response.body)
+            raise SessionIDRequiredError, response.header.request_uri if error['errorCode'] == 1
+             # TODO: Add some reconnection code, when it makes sense
+          else
+            error = JSON.parse(response.body)
+            raise RuntimeError, error
+        end
       end
     end
 
@@ -89,6 +91,32 @@ module Ic
 
     def to_s
       connected? ? "Session #{@id} connected to #{@server} as #{@user}" : ''
+    end
+
+    private
+    def http(verb, options = {})
+      raise MissingArgumentError, ':path' if !options[:path]
+      headers = {}
+      headers['Accept-Language']      = options[:language] || @language
+      headers['ININ-ICWS-CSRF-Token'] = options[:token]    || @token
+      @client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE # Only if turned on, we should verify by default
+      # TODO: Timeout
+
+      body = nil
+      if (options[:data])
+        headers['Content-Type'] = 'application/json'
+        body = options[:data].to_json
+      end
+      @client.debug_dev = STDERR if options[:debug] || $DEBUG
+      case verb
+        when :get    then response = @client.get("#{@uri}/icws#{options[:path]}", body, headers)
+        when :post   then response = @client.post("#{@uri}/icws#{options[:path]}", body, headers)
+        when :delete then response = @client.delete("#{@uri}/icws#{options[:path]}", body, headers)
+        when :put    then response = @client.put("#{@uri}/icws#{options[:path]}", body, headers)
+        else raise ArgumentError, 'verb'
+      end
+      @client.debug_dev = nil if options[:debug] || $DEBUG
+      response
     end
   end
 end

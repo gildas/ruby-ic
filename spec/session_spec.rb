@@ -5,6 +5,7 @@ describe 'Session' do
   context 'valid server and credentials' do
     before do
       @config = load_config('spec/login.json')
+      @config[:debug] = true
     end
 
     it 'should connect' do
