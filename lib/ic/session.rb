@@ -5,6 +5,8 @@ require 'ic/exceptions'
 
 module Ic
   class Session
+    MAX_REDIRECTIONS = 5
+
     attr_reader :id, :application_name, :server, :port, :user, :scheme, :language
 
     def initialize(options = {})
@@ -18,7 +20,7 @@ module Ic
 
       proxy        = ENV['HTTP_PROXY'] || options[:proxy]
       @client      = HTTPClient.new(proxy)
-      @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}")
+      @uri         = nil
       @token       = nil
       @id          = nil
     end
@@ -34,21 +36,27 @@ module Ic
       'userID'          => @user,
       'password'        => @password,
       }
-      puts "Connecting to #{@uri} as #{@user}..."
-      puts data.to_json
-      begin
+      alternate_server_index = 0
+      server = @server
+      while true do
+        @uri = URI.parse("#{@scheme}://#{server}:#{@port}")
+        puts "Connecting to #{@uri} as #{@user}..."
+        puts data.to_json
         response = http :post, :path => '/connection', :data => data
-      rescue
-        puts "Error while connecting: #{$!}"
-        raise
+        puts "Response: #{response.inspect}"
+        if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
+          puts "We need to check other servers"
+          data = JSON.parse(response.body)
+          puts JSON.pretty_generate data
+          server = data['alternateHostList'].first
+          raise TooManyRedirectionsError if alternate_server_index >= MAX_REDIRECTIONS
+          alternate_server_index += 1
+        else
+          @server = server
+          break
+        end
       end
 
-      puts "Response: #{response.inspect}"
-      if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
-        puts "We need to check other servers"
-        json = JSON.parse(response.body)
-        puts JSON.pretty_generate json
-      end
 
       if response.ok?
         if response.header['set-cookie']

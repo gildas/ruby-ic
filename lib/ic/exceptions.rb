@@ -4,3 +4,5 @@ class MissingArgumentError < ArgumentError ; end
 class AuthenticationError < RuntimeError ; end
 
 class SessionIDRequiredError < RuntimeError ;  end
+
+class TooManyRedirectionsError < RuntimeError ; end
