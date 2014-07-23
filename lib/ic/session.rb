@@ -1,5 +1,6 @@
 require 'json'
 require 'httpclient'
+require 'ic/helpers'
 require 'ic/http_statuses'
 require 'ic/exceptions'
 
@@ -20,7 +21,7 @@ module Ic
 
       proxy        = ENV['HTTP_PROXY'] || options[:proxy]
       @client      = HTTPClient.new(proxy)
-      @uri         = nil
+      @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}")
       @token       = nil
       @id          = nil
     end
@@ -43,7 +44,6 @@ module Ic
         puts "Connecting to #{@uri} as #{@user}..."
         puts data.to_json
         response = http :post, :path => '/connection', :data => data
-        puts "Response: #{response.inspect}"
         if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
           puts "We need to check other servers"
           data = JSON.parse(response.body)
@@ -57,7 +57,6 @@ module Ic
         end
       end
 
-
       if response.ok?
         if response.header['set-cookie']
           response.header['set-cookie'].each do |value|
@@ -68,7 +67,6 @@ module Ic
         @cookie   = response.header['set-cookie'].first           if response.header['set-cookie']
         @id       = response.header['ININ-ICWS-Session-ID'].first if response.header['ININ-ICWS-Session-ID']
         @token    = response.header['ININ-ICWS-CSRF-Token'].first if response.header['ININ-ICWS-CSRF-Token']
-        @password = nil
         puts "Cookie    : \"#{@cookie}\""
         puts "Session Id: \"#{@id}\""
         puts "Token     : \"#{@token}\""
@@ -93,6 +91,36 @@ module Ic
       end
     end
 
+    def disconnect
+      response = http :delete, :path => "/connection/#{@id}"
+      if response.ok?
+        @cookie = nil
+        @id     = nil
+        @token  = nil
+      else
+        if response.body
+          error = JSON.parse(response.body)
+          raise RuntimeError, error
+        else
+          raise RuntimeError, response.status
+        end
+      end
+    end
+
+    def server_version
+      response = http :get, :path => "/connection/version"
+      if response.ok?
+        JSON.parse(response.body).keys2sym
+      else
+        if response.body
+          error = JSON.parse(response.body)
+          raise RuntimeError, error
+        else
+          raise RuntimeError, response.status
+        end
+      end
+    end
+
     def connected?
       ! @id.nil?
     end
@@ -104,6 +132,8 @@ module Ic
     private
     def http(verb, options = {})
       raise MissingArgumentError, ':path' if !options[:path]
+      url = "#{@uri}/icws#{options[:path]}"
+      puts "URL: #{url}"
       headers = {}
       headers['Accept-Language']      = options[:language] || @language
       headers['ININ-ICWS-CSRF-Token'] = options[:token]    || @token
@@ -117,13 +147,14 @@ module Ic
       end
       @client.debug_dev = STDERR if options[:debug] || $DEBUG
       case verb
-        when :get    then response = @client.get("#{@uri}/icws#{options[:path]}", body, headers)
-        when :post   then response = @client.post("#{@uri}/icws#{options[:path]}", body, headers)
-        when :delete then response = @client.delete("#{@uri}/icws#{options[:path]}", body, headers)
-        when :put    then response = @client.put("#{@uri}/icws#{options[:path]}", body, headers)
+        when :get    then response = @client.get(url, body, headers)
+        when :post   then response = @client.post(url, body, headers)
+        when :delete then response = @client.delete(url, body, headers)
+        when :put    then response = @client.put(url, body, headers)
         else raise ArgumentError, 'verb'
       end
       @client.debug_dev = nil if options[:debug] || $DEBUG
+      puts "Response: #{response.inspect}"
       response
     end
   end
