@@ -17,17 +17,17 @@ describe 'Session' do
       expect(session.connected?).to be false
     end
 
-    specify 'should have a server version' do
+    specify 'should get a version from the CIC server' do
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
-      version = session.server_version
+      version = session.version
       expect(version).to_not be nil
     end
 
-    specify 'should give a feature list' do
+    specify 'should get a feature list from the CIC server' do
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
-      features = session.server_features
+      features = session.features
       expect(features).to be_truthy
       expect(features).to be_kind_of(Enumerable)
     end
