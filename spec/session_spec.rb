@@ -69,5 +69,18 @@ describe 'Session' do
       session.disconnect
       expect(session.connected?).to be false
     end
+
+    specify 'should be assignable' do
+      @config[:log_to] = "tmp/test-Session-Station=-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      session = Ic::Session.connect(@config)
+      expect(session).to be_truthy
+      expect(session.connected?).to be true
+      session.station(type: :remote_number, number: '+13178723000', persistent: false)
+      station = session.station
+      expect(station[:stationSetting]).to be 3
+      expect(station[:id]).to eq '+13178723000'
+      session.disconnect
+      expect(session.connected?).to be false
+    end
   end
 end

@@ -103,15 +103,39 @@ module Ic
       feature
     end
 
-    def station
-      begin
-        @logger.debug("Session##{@id}") { "Querying existing station connection" }
-        station = @client.get path: "/#{@id}/connection/station"
-        @logger.info('Session') { "Connected Station: #{station}" }
-        station
-      rescue HTTP::NotFoundError => e
-        error = JSON.parse(e.message).keys2sym
-        raise StationNotFoundError if error[:errorId] == '-2147221496'
+    def station(options = {})
+      if options.empty?
+        begin
+          @logger.debug("Session##{@id}") { "Querying existing station connection" }
+          station = @client.get path: "/#{@id}/connection/station"
+          @logger.info('Session') { "Connected Station: #{station}" }
+          station
+        rescue HTTP::NotFoundError => e
+          error = JSON.parse(e.message).keys2sym
+          raise StationNotFoundError if error[:errorId] == '-2147221496'
+        end
+      else
+        @logger.debug("Session##{@id}") { "Connecting to station #{options.to_json}" }
+        station = {}
+        case options[:type]
+          when :remote_number
+            station[:__type] = 'urn:inin.com:connection:remoteNumberSettings'
+            raise MissingArgumentError, 'number' unless (station[:remoteNumber] = options[:number])
+            station[:persistentConnection] ||= options[:persistent]
+          when :remote_station, :remote_workstation
+            station[:__type] = 'urn:inin.com:connection:remoteWorkstationSettings'
+            raise MissingArgumentError, 'station' unless (station[:workstation] = options[:station])
+            station[:number] ||= options[:number]
+          when :station, :workstation
+            station[:__type] = 'urn:inin.com:connection:workstationSettings'
+            raise MissingArgumentError, 'station' unless (station[:workstation] = options[:number] || options[:station])
+          else
+            raise ArgumentError, 'type'
+        end
+        station[:readyForInteractions] ||= options[:ready] || options[:readyForInteractions]
+        location = @client.put path: "/#{@id}/connection/station", data: station
+        @logger.info('Session') { "Successfully Connected to Station: #{location}" }
+        location
       end
     end
 
