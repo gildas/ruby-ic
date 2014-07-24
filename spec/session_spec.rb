@@ -9,7 +9,7 @@ describe 'Session' do
       @config[:log_level] = Logger::DEBUG
     end
 
-    it 'should connect and disconnect' do
+    specify 'should connect and disconnect' do
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
@@ -17,14 +17,14 @@ describe 'Session' do
       expect(session.connected?).to be false
     end
 
-    it 'should have a server version' do
+    specify 'should have a server version' do
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       version = session.server_version
       expect(version).to_not be nil
     end
 
-    it 'should give a feature list' do
+    specify 'should give a feature list' do
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       features = session.server_features
