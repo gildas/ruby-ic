@@ -38,6 +38,13 @@ describe 'Session' do
       expect(session.feature?('connection')).to be true
     end
 
+    specify 'the feature "connection" should at least be version 1' do
+      session = Ic::Session.new(@config)
+      expect(session).to be_truthy
+      feature = session.feature('connection')
+      expect(feature[:version]).to be >= 1
+    end
+
     specify 'should not contain the feature "acme"' do
       session = Ic::Session.new(@config)
       expect(session).to be_truthy

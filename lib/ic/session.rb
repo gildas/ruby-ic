@@ -96,6 +96,13 @@ module Ic
       end
     end
 
+    def feature(feature)
+      @logger.debug('Session') { "Querying feature \"#{feature}\""}
+      feature = @client.get path: "/connection/features/#{feature}"
+      @logger.info('Session') { "Supported feature: #{feature}" }
+      feature
+    end
+
     def connected?
       ! @id.nil?
     end
