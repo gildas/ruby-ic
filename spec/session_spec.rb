@@ -5,7 +5,8 @@ describe 'Session' do
   context 'valid server and credentials' do
     before do
       @config = load_config('spec/login.json')
-      #@config[:debug] = true
+      @config[:log_to]    = "tmp/test-session#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_level] = Logger::DEBUG
     end
 
     it 'should connect and disconnect' do

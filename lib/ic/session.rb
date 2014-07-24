@@ -3,6 +3,7 @@ require 'httpclient'
 require 'ic/helpers'
 require 'ic/http_statuses'
 require 'ic/exceptions'
+require 'ic/logger'
 
 module Ic
   class Session
@@ -19,11 +20,13 @@ module Ic
       raise MissingArgumentError, 'user'     unless @user     = options[:user]
       raise MissingArgumentError, 'password' unless @password = options[:password]
 
+      @logger = Ic::Logger.create(options)
       proxy        = ENV['HTTP_PROXY'] || options[:proxy]
       @client      = HTTPClient.new(proxy)
       @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}")
       @token       = nil
       @id          = nil
+      @logger.info('Session') { "Will connect to #{@uri}" }
     end
 
     def self.connect(options = {})
@@ -42,11 +45,12 @@ module Ic
       server = @server
       while true do
         @uri = URI.parse("#{@scheme}://#{server}:#{@port}")
+        @logger.info('Session') { "Connecting application \"#{@application}\" to #{@uri} as #{@user}" }
         response = http :post, :path => '/connection', :data => data
         if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
-          STDERR.puts "We need to check other servers"
+          @logger.warn('Session') { "We need to check other servers" }
           data = JSON.parse(response.body)
-          STDERR.puts JSON.pretty_generate data
+          @logger.info('Session') { "alternate servers: #{}JSON.pretty_generate data}" }
           server = data['alternateHostList'].first
           raise TooManyRedirectionsError if alternate_server_index >= MAX_REDIRECTIONS
           alternate_server_index += 1
@@ -60,8 +64,10 @@ module Ic
         # cookies are managed automatically by the httpclient gem
         @id    = response.header['ININ-ICWS-Session-ID'].first if response.header['ININ-ICWS-Session-ID']
         @token = response.header['ININ-ICWS-CSRF-Token'].first if response.header['ININ-ICWS-CSRF-Token']
+        @logger.info("Session##{@id}") { "Successfully Connected to Session #{@id}, token=\"#{@token}\"" }
         self
       else
+        @logger.error('Session') { "Failure while connecting to #{@uri}: #{response}"}
         case response.status
           when HTTP::Status::BAD_REQUEST
             # The response can be something like:
@@ -83,8 +89,10 @@ module Ic
 
     def disconnect
       return if ! connected?
+      @logger.info("Session##{@id}") { "Disconnecting from #{@server}" }
       response = http :delete, :path => "/#{@id}/connection"
       if response.ok?
+        @logger.info("Session##{@id}") { "Successfully disconnected from #{@server}" }
         @cookie = nil
         @id     = nil
         @token  = nil
@@ -101,12 +109,15 @@ module Ic
     def server_version
       response = http :get, :path => '/connection/version'
       if response.ok?
+        @logger.info("Session##{@id}") { "Server version: #{response.body}" }
         JSON.parse(response.body).keys2sym
       else
         if response.body
           error = JSON.parse(response.body)
+          @logger.error("Session##{@id}") { "Failure: #{error}" }
           raise RuntimeError, error
         else
+          @logger.error("Session##{@id}") { "Failure: #{response.status}" }
           raise RuntimeError, response.status
         end
       end
@@ -114,7 +125,7 @@ module Ic
 
     def server_features
       response = http :get, :path => '/connection/features'
-      if response.ok?
+      if response.ok
         data = JSON.parse(response.body)
         raise ArgumentError, "featureInfoList" if ! data['featureInfoList']
         data['featureInfoList']
@@ -152,7 +163,10 @@ module Ic
         headers['Content-Type'] = 'application/json'
         body = options[:data].to_json
       end
-      @client.debug_dev = STDERR if options[:debug] || $DEBUG
+      @logger.info('HTTP')  { "Sending request to #{url}" }
+      @logger.debug('HTTP') { "  SSL verify mode: #{@client.ssl_config.verify_mode}" }
+      @logger.debug('HTTP') {"HTTP traffic <<<<<"}
+      @client.debug_dev = @logger if @logger.debug?
       case verb
         when :get    then response = @client.get(url, body, headers)
         when :post   then response = @client.post(url, body, headers)
@@ -160,8 +174,9 @@ module Ic
         when :put    then response = @client.put(url, body, headers)
         else raise ArgumentError, 'verb'
       end
-      @client.debug_dev = nil if options[:debug] || $DEBUG
-      STDERR.puts "Response: #{response.inspect}" if !response.ok?
+      @client.debug_dev = nil if @logger.debug?
+      @logger.debug('HTTP') {"HTTP traffic >>>>>"}
+      @logger.debug('HTTP') { "Response: #{response.status} #{response.reason}" }
       response
     end
   end
