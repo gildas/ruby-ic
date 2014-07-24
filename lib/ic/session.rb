@@ -8,15 +8,16 @@ module Ic
   class Session
     MAX_REDIRECTIONS = 5
 
-    attr_reader :id, :application, :user
+    attr_reader :id, :application, :user, :user_display
 
     def initialize(options = {})
       raise MissingArgumentError, 'user'     unless (@user     = options[:user])
       raise MissingArgumentError, 'password' unless (@password = options[:password])
-      @application = options[:application] || 'icws client'
-      @logger      = options[:logger]      || Ic::Logger.create(options)
-      @client      = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(logger: @logger))
-      @id          = nil
+      @user_display = @user
+      @application  = options[:application] || 'icws client'
+      @logger       = options[:logger]      || Ic::Logger.create(options)
+      @client       = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(logger: @logger))
+      @id           = nil
     end
 
     def self.connect(options = {})
@@ -39,7 +40,8 @@ module Ic
           session_info = @client.post server: server, path: '/connection', data: data
           raise KeyError, 'sessionId' unless session_info[:sessionId]
           raise KeyError, 'csrfToken' unless session_info[:csrfToken]
-          @id = session_info[:sessionId]
+          @id            = session_info[:sessionId]
+          @user_display |= session_info[:userDisplayName]
           @logger.info("Session##{@id}") { "Successfully Connected to Session #{@id}" }
           return self
         rescue HTTP::WantRedirection => e
