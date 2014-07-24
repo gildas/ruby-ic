@@ -98,9 +98,11 @@ module Ic
             when HTTP::Status::UNAUTHORIZED
               raise KeyError, 'SessionID' if error[:errorCode] == 1
               # TODO: Add some reconnection code, when it makes sense
-              raise HTTP::UnauthorizedError, error
+              raise HTTP::UnauthorizedError, error.to_json
+            when HTTP::Status::NOT_FOUND
+              raise HTTP::NotFoundError, error.to_json
             else
-              raise HTTP::HTTPError, error
+              raise HTTP::HTTPError, error.to_json
           end
         end
       end

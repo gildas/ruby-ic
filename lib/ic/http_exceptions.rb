@@ -6,6 +6,8 @@ module Ic
 
     class BadRequestError < HTTPError ; end
 
+    class NotFoundError < HTTPError ; end
+
     class AuthenticationError < HTTPError ; end
 
     class UnauthorizedError < HTTPError ; end

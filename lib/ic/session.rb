@@ -56,7 +56,7 @@ module Ic
 
     def disconnect
       return self unless connected?
-      @logger.info("Session##{@id}") { "Disconnecting from #{@client.server}" }
+      @logger.debug("Session##{@id}") { "Disconnecting from #{@client.server}" }
       @client.delete path: "/#{@id}/connection"
       @logger.info("Session##{@id}") { "Successfully disconnected from #{@client.server}" }
       @id = nil
@@ -101,6 +101,18 @@ module Ic
       feature = @client.get path: "/connection/features/#{feature}"
       @logger.info('Session') { "Supported feature: #{feature}" }
       feature
+    end
+
+    def station
+      begin
+        @logger.debug("Session##{@id}") { "Querying existing station connection" }
+        station = @client.get path: "/#{@id}/connection/station"
+        @logger.info('Session') { "Connected Station: #{station}" }
+        station
+      rescue HTTP::NotFoundError => e
+        error = JSON.parse(e.message).keys2sym
+        raise StationNotFoundError if error[:errorId] == '-2147221496'
+      end
     end
 
     def connected?

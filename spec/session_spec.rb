@@ -2,22 +2,25 @@ require 'rspec'
 require 'spec_helper'
 
 describe 'Session' do
-  context 'valid server and credentials' do
-    before do
-      @config = load_config('spec/login.json')
-      @config[:log_to]    = "tmp/test-session#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
-      @config[:log_level] = Logger::DEBUG
-    end
+  before do
+    @config = load_config('spec/login.json')
+    @config[:log_level] = Logger::DEBUG
+  end
 
+  context 'valid server and credentials' do
     specify 'should connect and disconnect' do
+      @config[:log_to] = "tmp/test-Session-Connect-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
       session.disconnect
       expect(session.connected?).to be false
     end
+  end
 
+  context 'Server Information' do
     specify 'should get a version from the CIC server' do
+      @config[:log_to] = "tmp/test-Session-Version-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       version = session.version
@@ -25,6 +28,7 @@ describe 'Session' do
     end
 
     specify 'should get a feature list from the CIC server' do
+      @config[:log_to] = "tmp/test-Session-Features-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       features = session.features
@@ -33,12 +37,14 @@ describe 'Session' do
     end
 
     specify 'should contain the feature "connection"' do
+      @config[:log_to] = "tmp/test-Session-Feature?-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       expect(session.feature?('connection')).to be true
     end
 
     specify 'the feature "connection" should at least be version 1' do
+      @config[:log_to] = "tmp/test-Session-Feature-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       feature = session.feature('connection')
@@ -46,9 +52,22 @@ describe 'Session' do
     end
 
     specify 'should not contain the feature "acme"' do
+      @config[:log_to] = "tmp/test-Session-!Feature?-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       expect(session.feature?('acme')).to be false
+    end
+  end
+
+  context 'Station Connection' do
+    specify 'should not exist by default' do
+      @config[:log_to] = "tmp/test-Session-Station-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      session = Ic::Session.connect(@config)
+      expect(session).to be_truthy
+      expect(session.connected?).to be true
+      expect { session.station }.to raise_error(Ic::StationNotFoundError)
+      session.disconnect
+      expect(session.connected?).to be false
     end
   end
 end
