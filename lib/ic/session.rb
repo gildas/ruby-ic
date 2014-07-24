@@ -40,8 +40,8 @@ module Ic
           session_info = @client.post server: server, path: '/connection', data: data
           raise KeyError, 'sessionId' unless session_info[:sessionId]
           raise KeyError, 'csrfToken' unless session_info[:csrfToken]
-          @id            = session_info[:sessionId]
-          @user_display |= session_info[:userDisplayName]
+          @id             = session_info[:sessionId]
+          @user_display ||= session_info[:userDisplayName]
           @logger.info("Session##{@id}") { "Successfully Connected to Session #{@id}" }
           return self
         rescue HTTP::WantRedirection => e
