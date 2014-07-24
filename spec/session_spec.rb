@@ -31,5 +31,17 @@ describe 'Session' do
       expect(features).to be_truthy
       expect(features).to be_kind_of(Enumerable)
     end
+
+    specify 'should contain the feature "connection"' do
+      session = Ic::Session.new(@config)
+      expect(session).to be_truthy
+      expect(session.feature?('connection')).to be true
+    end
+
+    specify 'should not contain the feature "acme"' do
+      session = Ic::Session.new(@config)
+      expect(session).to be_truthy
+      expect(session.feature?('acme')).to be false
+    end
   end
 end

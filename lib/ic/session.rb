@@ -82,6 +82,17 @@ module Ic
       features['featureInfoList']
     end
 
+    def feature?(feature)
+      begin
+        @logger.debug('Session') { "Querying feature \"#{feature}\""}
+        feature = @client.get path: "/connection/features/#{feature}"
+        @logger.info('Session') { "Supported feature: #{feature}" }
+        true
+      rescue HTTP::BadRequestError => e
+        @logger.info('Session') { "Unsupported feature: #{feature}, error: #{e.message}"}
+        false
+      end
+    end
     def connected?
       ! @id.nil?
     end
