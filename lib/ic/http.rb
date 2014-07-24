@@ -75,28 +75,28 @@ module Ic
         @logger.debug('HTTP') { "Response: #{response.status} #{response.reason}" }
         if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
           @logger.warn('HTTP') { 'Host wants us to redirect' }
-          targets = JSON.parse(response.content)
-          raise KeyError, 'alternateHostList' unless targets['alternateHostList']
-          raise HTTP::WantRedirection, targets['alternateHostList']
+          targets = JSON.parse(response.content).keys2sym
+          raise KeyError, 'alternateHostList' unless targets[:alternateHostList]
+          raise HTTP::WantRedirection, targets[:alternateHostList]
         elsif response.ok?
           if response.content.size > 0
-            data = JSON.parse(response.content)
-            @token = data['csrfToken'] if data['csrfToken']
+            data = JSON.parse(response.content).keys2sym
+            @token = data[:csrfToken] if data[:csrfToken]
             return data
           end
         else
           @logger.error('HTTP') { "HTTP Failure: #{response.status} #{response.reason}" }
-          error = response.content.size > 0 ? JSON.parse(response.content) : {}
+          error = response.content.size > 0 ? JSON.parse(response.content).keys2sym : {}
           @logger.error('HTTP') { "ICWS Failure: #{error}" }
           case response.status
             when HTTP::Status::BAD_REQUEST
               # The response can be something like:
               #   {"errorId":"error.request.connection.authenticationFailure","errorCode":-2147221503,"message":"The authentication process failed."}
-              raise HTTP::AuthenticationError if error['errorId']   == 'error.request.connection.authenticationFailure'
-              raise HTTP::AuthenticationError if error['errorCode'] == -2147221503 # There was no errorId in CIC < 4.0.6
+              raise HTTP::AuthenticationError if error[:errorId]   == 'error.request.connection.authenticationFailure'
+              raise HTTP::AuthenticationError if error[:errorCode] == -2147221503 # There was no errorId in CIC < 4.0.6
               raise HTTP::BadRequestError, response
             when HTTP::Status::UNAUTHORIZED
-              raise KeyError, 'SessionID' if error['errorCode'] == 1
+              raise KeyError, 'SessionID' if error[:errorCode] == 1
               # TODO: Add some reconnection code, when it makes sense
               raise HTTP::UnauthorizedError, error
             else

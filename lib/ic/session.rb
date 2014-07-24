@@ -37,9 +37,9 @@ module Ic
         @logger.info('Session') { "Connecting application \"#{@application}\" to #{server} as #{@user}" }
         begin
           session_info = @client.post server: server, path: '/connection', data: data
-          raise KeyError, 'sessionId' unless session_info['sessionId']
-          raise KeyError, 'csrfToken' unless session_info['csrfToken']
-          @id = session_info['sessionId']
+          raise KeyError, 'sessionId' unless session_info[:sessionId]
+          raise KeyError, 'csrfToken' unless session_info[:csrfToken]
+          @id = session_info[:sessionId]
           @logger.info("Session##{@id}") { "Successfully Connected to Session #{@id}" }
           return self
         rescue HTTP::WantRedirection => e
@@ -78,8 +78,8 @@ module Ic
     def features
       features = @client.get path: '/connection/features'
       @logger.info('Session') { "Server features: #{features}" }
-      raise ArgumentError, 'featureInfoList' unless features['featureInfoList']
-      features['featureInfoList']
+      raise ArgumentError, 'featureInfoList' unless features[:featureInfoList]
+      features[:featureInfoList]
     end
 
     def feature?(feature)
@@ -93,6 +93,7 @@ module Ic
         false
       end
     end
+
     def connected?
       ! @id.nil?
     end
