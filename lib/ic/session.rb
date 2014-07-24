@@ -71,13 +71,13 @@ module Ic
 
     def version
       version = @client.get path: '/connection/version'
-      @logger.info("Session##{@id}") { "Server version: #{version}" }
+      @logger.info('Session') { "Server version: #{version}" }
       version
     end
 
     def features
       features = @client.get path: '/connection/features'
-      @logger.info("Session##{@id}") { "Server features: #{features}" }
+      @logger.info('Session') { "Server features: #{features}" }
       raise ArgumentError, 'featureInfoList' unless features['featureInfoList']
       features['featureInfoList']
     end
