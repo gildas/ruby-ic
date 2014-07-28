@@ -70,8 +70,34 @@ describe 'Session' do
       expect(session.connected?).to be false
     end
 
-    specify 'should be assignable' do
-      @config[:log_to] = "tmp/test-Session-Station=-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+    specify 'should allow workstation' do
+      @config[:log_to] = "tmp/test-Session-Station=Workstation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      session = Ic::Session.connect(@config)
+      expect(session).to be_truthy
+      expect(session.connected?).to be true
+      session.station(type: :workstation, extension: '7001')
+      station = session.station
+      expect(station[:stationSetting]).to be 3
+      expect(station[:id]).to eq '7001'
+      session.disconnect
+      expect(session.connected?).to be false
+    end
+
+    specify 'should allow remote station' do
+      @config[:log_to] = "tmp/test-Session-Station=RemoteStation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      session = Ic::Session.connect(@config)
+      expect(session).to be_truthy
+      expect(session.connected?).to be true
+      session.station(type: :remote_station, number: 'gildasmobile')
+      station = session.station
+      expect(station[:stationSetting]).to be 3
+      expect(station[:id]).to eq 'gildasmobile'
+      session.disconnect
+      expect(session.connected?).to be false
+    end
+
+    specify 'should allow remote number' do
+      @config[:log_to] = "tmp/test-Session-Station=RemoteNumber-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
