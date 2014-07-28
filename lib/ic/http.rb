@@ -46,7 +46,7 @@ module Ic
         # cookies are managed automatically by the httpclient gem
         raise MissingArgumentError, ':path' unless options[:path]
         self.server = options[:server] if options[:server]
-        url = "#{@uri}/icws#{options[:path]}"
+        url = "#{@uri}#{options[:path]}"
         headers = {}
         headers['Accept-Language']      = options[:language] || @language
         headers['ININ-ICWS-CSRF-Token'] = options[:token]    || @token

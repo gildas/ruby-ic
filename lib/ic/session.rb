@@ -8,6 +8,8 @@ module Ic
   class Session
     MAX_REDIRECTIONS = 5
 
+    BASE_LOCATION = '/icws/connection'
+
     attr_reader :id, :application, :user, :user_display
 
     def initialize(options = {})
@@ -18,6 +20,7 @@ module Ic
       @logger       = options[:logger]      || Ic::Logger.create(options)
       @client       = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(logger: @logger))
       @id           = nil
+      @location     = BASE_LOCATION
     end
 
     def self.connect(options = {})
@@ -37,12 +40,12 @@ module Ic
       loop do
         @logger.info('Session') { "Connecting application \"#{@application}\" to #{server} as #{@user}" }
         begin
-          session_info = @client.post server: server, path: '/connection', data: data
-          raise KeyError, 'sessionId' unless session_info[:sessionId]
+          session_info = @client.post server: server, path: BASE_LOCATION, data: data
+          raise KeyError, 'sessionId' unless (@id       = session_info[:sessionId])
+          raise KeyError, 'location'  unless (@location = session_info[:location])
           raise KeyError, 'csrfToken' unless session_info[:csrfToken]
-          @id             = session_info[:sessionId]
           @user_display ||= session_info[:userDisplayName]
-          @logger.info("Session##{@id}") { "Successfully Connected to Session #{@id}" }
+          @logger.info("Session##{@id}") { "Successfully Connected to Session #{@id}, located at: #{@location}" }
           return self
         rescue HTTP::WantRedirection => e
           @logger.warn('Session') { 'We need to check other servers' }
@@ -57,10 +60,18 @@ module Ic
     def disconnect
       return self unless connected?
       @logger.debug("Session##{@id}") { "Disconnecting from #{@client.server}" }
-      @client.delete path: "/#{@id}/connection"
+      @client.delete path: location
       @logger.info("Session##{@id}") { "Successfully disconnected from #{@client.server}" }
       @id = nil
       self
+    end
+
+    def connected?
+      ! @id.nil?
+    end
+
+    def location
+      connected? ? @location : '/icws/connection'
     end
 
     def server
@@ -72,13 +83,13 @@ module Ic
     end
 
     def version
-      version = @client.get path: '/connection/version'
+      version = @client.get path: "#{BASE_LOCATION}/version"
       @logger.info('Session') { "Server version: #{version}" }
       version
     end
 
     def features
-      features = @client.get path: '/connection/features'
+      features = @client.get path: "#{BASE_LOCATION}/features"
       @logger.info('Session') { "Server features: #{features}" }
       raise ArgumentError, 'featureInfoList' unless features[:featureInfoList]
       features[:featureInfoList]
@@ -87,7 +98,7 @@ module Ic
     def feature?(feature)
       begin
         @logger.debug('Session') { "Querying feature \"#{feature}\""}
-        feature = @client.get path: "/connection/features/#{feature}"
+        feature = @client.get path: "#{BASE_LOCATION}/features/#{feature}"
         @logger.info('Session') { "Supported feature: #{feature}" }
         true
       rescue HTTP::BadRequestError => e
@@ -98,7 +109,7 @@ module Ic
 
     def feature(feature)
       @logger.debug('Session') { "Querying feature \"#{feature}\""}
-      feature = @client.get path: "/connection/features/#{feature}"
+      feature = @client.get path: "#{BASE_LOCATION}/features/#{feature}"
       @logger.info('Session') { "Supported feature: #{feature}" }
       feature
     end
@@ -107,7 +118,7 @@ module Ic
       if options.empty?
         begin
           @logger.debug("Session##{@id}") { "Querying existing station connection" }
-          station = @client.get path: "/#{@id}/connection/station"
+          station = @client.get path: "#{location}/station"
           @logger.info('Session') { "Connected Station: #{station}" }
           station
         rescue HTTP::NotFoundError => e
@@ -135,19 +146,15 @@ module Ic
         end
         station[:readyForInteractions] ||= options[:ready] || options[:readyForInteractions]
         begin
-          location = @client.put path: "/#{@id}/connection/station", data: station
-          @logger.info('Session') { "Successfully Connected to Station: #{location}" }
-          location
+          station_info = @client.put path: "#{location}/station", data: station
+          @logger.info('Session') { "Successfully Connected to Station: #{station_info}" }
+          station_info
         rescue HTTP::NotFoundError => e
           error = JSON.parse(e.message).keys2sym
           raise StationNotFoundError, station[:workstation] || station[:remoteNumber] if error[:errorId] == '-2147221496'
           raise e
         end
       end
-    end
-
-    def connected?
-      ! @id.nil?
     end
 
     def to_s
