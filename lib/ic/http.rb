@@ -98,7 +98,8 @@ module Ic
               raise HTTP::NotFoundError, error.to_json if error[:errorId]   == '-2147221496'
               raise HTTP::BadRequestError, response
             when HTTP::Status::UNAUTHORIZED
-              raise KeyError, 'SessionID' if error[:errorCode] == 1
+              raise SessionIDExpectedError             if error[:errorCode] == 1
+              raise AuthTokenExpectedError             if error[:errorCode] == 2
               # TODO: Add some reconnection code, when it makes sense
               raise HTTP::UnauthorizedError, error.to_json
             when HTTP::Status::NOT_FOUND
