@@ -45,7 +45,7 @@ module Ic
       def request(verb, options = {})
         # cookies are managed automatically by the httpclient gem
         raise MissingArgumentError, ':path' unless options[:path]
-        server = options[:server] if options[:server]
+        self.server = options[:server] if options[:server]
         url = "#{@uri}/icws#{options[:path]}"
         headers = {}
         headers['Accept-Language']      = options[:language] || @language
