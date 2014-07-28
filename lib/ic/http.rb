@@ -82,6 +82,7 @@ module Ic
           if response.content.size > 0
             data = JSON.parse(response.content).keys2sym
             @token = data[:csrfToken] if data[:csrfToken]
+            data[:location] = response.header['Location'] if response.header['Location']
             return data
           end
         else
