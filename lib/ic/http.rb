@@ -79,12 +79,17 @@ module Ic
           raise KeyError, 'alternateHostList' unless targets[:alternateHostList]
           raise HTTP::WantRedirection, targets[:alternateHostList]
         elsif response.ok?
+          data = {}
           if response.content.size > 0
-            data = JSON.parse(response.content).keys2sym
+            data.merge! JSON.parse(response.content).keys2sym
             @token = data[:csrfToken] if data[:csrfToken]
-            data[:location] = response.header['Location'] if response.header['Location']
-            return data
+            data[:location] = response.header['Location'].first if response.header['Location'] && !response.header['Location'].empty?
+            @logger.debug('HTTP') { "Token?: #{data[:csrfToken]}"}
           end
+          data[:content_type] = response.header['Content-Type'].first
+          data[:location] = response.header['Location'].first if response.header['Location'] && !response.header['Location'].empty?
+          @logger.debug('HTTP') { "Content Type: #{data[:content_type]}, location?: #{data[:location]}"}
+          return data
         else
           @logger.error('HTTP') { "HTTP Failure: #{response.status} #{response.reason}" }
           error = response.content.size > 0 ? JSON.parse(response.content).keys2sym : {}
