@@ -113,6 +113,7 @@ module Ic
         rescue HTTP::NotFoundError => e
           error = JSON.parse(e.message).keys2sym
           raise StationNotFoundError if error[:errorId] == '-2147221496'
+          raise e
         end
       else
         @logger.debug("Session##{@id}") { "Connecting to station #{options.to_json}" }
@@ -124,18 +125,24 @@ module Ic
             station[:persistentConnection] ||= options[:persistent]
           when :remote_station, :remote_workstation
             station[:__type] = 'urn:inin.com:connection:remoteWorkstationSettings'
-            raise MissingArgumentError, 'station' unless (station[:workstation] = options[:station])
+            raise MissingArgumentError, 'station' unless (station[:workstation] = options[:workstation] || options[:station])
             station[:number] ||= options[:number]
           when :station, :workstation
             station[:__type] = 'urn:inin.com:connection:workstationSettings'
-            raise MissingArgumentError, 'station' unless (station[:workstation] = options[:number] || options[:station])
+            raise MissingArgumentError, 'station' unless (station[:workstation] = options[:workstation] || options[:station])
           else
             raise ArgumentError, 'type'
         end
         station[:readyForInteractions] ||= options[:ready] || options[:readyForInteractions]
-        location = @client.put path: "/#{@id}/connection/station", data: station
-        @logger.info('Session') { "Successfully Connected to Station: #{location}" }
-        location
+        begin
+          location = @client.put path: "/#{@id}/connection/station", data: station
+          @logger.info('Session') { "Successfully Connected to Station: #{location}" }
+          location
+        rescue HTTP::NotFoundError => e
+          error = JSON.parse(e.message).keys2sym
+          raise StationNotFoundError, station[:workstation] || station[:remoteNumber] if error[:errorId] == '-2147221496'
+          raise e
+        end
       end
     end
 

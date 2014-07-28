@@ -75,10 +75,10 @@ describe 'Session' do
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
-      session.station(type: :workstation, extension: '7001')
+      session.station(type: :workstation, station: @config[:workstation] || '7001')
       station = session.station
-      expect(station[:stationSetting]).to be 3
-      expect(station[:id]).to eq '7001'
+      expect(station[:stationSetting]).to be 1
+      expect(station[:id]).to eq (@config[:workstation] || '7001')
       session.disconnect
       expect(session.connected?).to be false
     end
@@ -88,10 +88,10 @@ describe 'Session' do
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
-      session.station(type: :remote_station, number: 'gildasmobile')
+      session.station(type: :remote_station, station: @config[:remotestation] || 'gildasmobile')
       station = session.station
-      expect(station[:stationSetting]).to be 3
-      expect(station[:id]).to eq 'gildasmobile'
+      expect(station[:stationSetting]).to be 2
+      expect(station[:id]).to eq (@config[:remotestation] || 'gildasmobile')
       session.disconnect
       expect(session.connected?).to be false
     end
@@ -101,10 +101,10 @@ describe 'Session' do
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
-      session.station(type: :remote_number, number: '+13178723000', persistent: false)
+      session.station(type: :remote_number, number: @config[:remotenumber] || '+13178723000', persistent: @config[:persistent] || false)
       station = session.station
       expect(station[:stationSetting]).to be 3
-      expect(station[:id]).to eq '+13178723000'
+      expect(station[:id]).to eq (@config[:remotenumber] || '+13178723000')
       session.disconnect
       expect(session.connected?).to be false
     end

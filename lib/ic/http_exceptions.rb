@@ -13,5 +13,6 @@ module Ic
     class UnauthorizedError < HTTPError ; end
 
     class TooManyRedirectionsError < HTTPError ; end
+
   end
 end

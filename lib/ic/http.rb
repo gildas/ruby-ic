@@ -92,8 +92,9 @@ module Ic
             when HTTP::Status::BAD_REQUEST
               # The response can be something like:
               #   {"errorId":"error.request.connection.authenticationFailure","errorCode":-2147221503,"message":"The authentication process failed."}
-              raise HTTP::AuthenticationError if error[:errorId]   == 'error.request.connection.authenticationFailure'
-              raise HTTP::AuthenticationError if error[:errorCode] == -2147221503 # There was no errorId in CIC < 4.0.6
+              raise HTTP::AuthenticationError          if error[:errorId]   == 'error.request.connection.authenticationFailure'
+              raise HTTP::AuthenticationError          if error[:errorCode] == -2147221503 # There was no errorId in CIC < 4.0.6
+              raise HTTP::NotFoundError, error.to_json if error[:errorId]   == '-2147221496'
               raise HTTP::BadRequestError, response
             when HTTP::Status::UNAUTHORIZED
               raise KeyError, 'SessionID' if error[:errorCode] == 1
