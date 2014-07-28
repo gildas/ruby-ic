@@ -22,7 +22,7 @@ module Ic
     def self.targets(options={})
       return [] if ! options[:log_to]
       case options[:log_to]
-        when Array              then options[:log_to].collect {|target| targets(log_to: target)}.flatten
+        when Array              then options[:log_to].map {|target| targets(log_to: target)}.flatten
         when String             then [ File.open(options[:log_to], 'a') ]
         when File, StringIO, IO then [ options[:log_to] ]
         else []
