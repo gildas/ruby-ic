@@ -131,6 +131,8 @@ module Ic
     def station=(station)
       if station.nil?
         # Disconnect from the current station
+        trace.debug("Session##{@id}") { 'Disconnecting from all stations' }
+        @client.delete path: "#{location}/station", session: self
       else
         trace.debug("Session##{@id}") { "Connecting to station #{station}" }
         begin

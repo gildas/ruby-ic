@@ -139,5 +139,23 @@ describe 'Session' do
         expect(session.connected?).to be false
       end
     end
+
+    specify 'should be able to disconnect from all stations' do
+      @config[:log_to] = "tmp/test-Session-NoStation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      session = Ic::Session.connect(@config)
+      expect(session).to be_truthy
+      expect(session.connected?).to be true
+      begin
+        session.station = Ic::WorkstationSettings.new(id: @config[:workstation])
+        station = session.station
+        expect(station[:stationSetting]).to be 1
+        expect(station[:id]).to eq @config[:workstation]
+        session.station = nil
+        expect { session.station }.to raise_error(Ic::StationNotFoundError)
+      ensure
+        session.disconnect
+        expect(session.connected?).to be false
+      end
+    end
   end
 end
