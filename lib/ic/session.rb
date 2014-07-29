@@ -15,7 +15,7 @@ module Ic
     attr_reader :id, :application, :user, :client
 
     def initialize(options = {})
-      initialize_logger( options)
+      initialize_logger(options)
       raise MissingArgumentError, 'user'     unless (@user     = User.new(session: self, id: options[:user]))
       raise MissingArgumentError, 'password' unless (@password = options[:password])
       @application  = options[:application] || 'icws client'
@@ -72,7 +72,7 @@ module Ic
     end
 
     def location
-      connected? ? @location : '/icws/connection'
+      connected? ? @location : BASE_LOCATION
     end
 
     def server
