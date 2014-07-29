@@ -11,28 +11,29 @@ module Ic
     attr_reader :id, :message, :group_tag, :icon_uri, :system_id, :changed_at, :on_phone_at
 
     def self.find_all(session, options = {})
-      session.logger.debug('Status') { "Requesting the list of statuses on session #{session}, options=#{options}" }
+      session.trace.debug('Status') { "Requesting the list of statuses on session #{session}, options=#{options}" }
       info = session.client.get path: "/icws/#{session.id}/status/status-messages", session: session
-      session.logger.info('Status') { "Statuses: #{info}" }
+      session.trace.info('Status') { "Statuses: #{info}" }
       info[:statusMessageList].collect { |item| Status.new(item.merge(session: session)) }
     end
 
     def self.find_all_ids(session, options = {})
       if options[:user]
-        session.logger.debug('Status') { "Requesting the list of status ids for user #{options[:user]} on session #{session}" }
+        session.trace.debug('Status') { "Requesting the list of status ids for user #{options[:user]} on session #{session}" }
         user_id = options[:user].respond_to?(:id) ? options[:user].id : options[:user]
         info = session.client.get path: "/icws/#{session.id}/status/status-messages-user-access/#{user_id}", session: session
-        session.logger.info('Status') { "Statuses: #{info}" }
+        session.trace.info('Status') { "Statuses: #{info}" }
         info[:statusMessages]
       else
-        session.logger.debug('Status') { "Requesting the list of status ids on session #{session}" }
+        session.trace.debug('Status') { "Requesting the list of status ids on session #{session}" }
         info = session.client.get path: "/icws/#{session.id}/status/status-messages", session: session
-        session.logger.info('Status') { "Statuses: #{info}" }
+        session.trace.info('Status') { "Statuses: #{info}" }
         info[:statusMessageList].collect { |item| item[:statusId] }
       end
     end
 
     def initialize(options = {})
+      options[:log_to] = options[:session].logger unless options[:log_to]
       initialize_logger(options)
       @session         = options[:session]
       @can_have_date   = options.include?(:canHaveDate) ? options[:canHaveDate] : false

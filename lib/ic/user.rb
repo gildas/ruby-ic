@@ -12,6 +12,7 @@ module Ic
     attr_writer :display
 
     def initialize(options = {})
+      options[:log_to] = options[:session].logger unless options[:log_to]
       initialize_logger(options)
       @session = options[:session]
       @id      = options[:id] || @session.user.id
@@ -19,9 +20,9 @@ module Ic
     end
 
     def status_id
-      @logger.debug('User') { "Requesting the current status ids for user #{options[:user]}" }
+      trace.debug('User') { "Requesting the current status ids for user #{options[:user]}" }
       info = @session.client.get path: "/icws/#{@session.id}/status/user-statuses/#{@id}", session: @session
-      @logger.info('User') { "Statuses: #{info}" }
+      trace.info('User') { "Statuses: #{info}" }
       #TODO: What do we do with the info[:notes] if present
       Status.new(info)
     end
