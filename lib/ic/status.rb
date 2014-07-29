@@ -1,6 +1,5 @@
 require 'json'
 require 'ic/helpers'
-require 'ic/http'
 require 'ic/exceptions'
 require 'ic/logger'
 
