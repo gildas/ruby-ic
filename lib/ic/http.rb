@@ -7,10 +7,11 @@ require 'ic/logger'
 module Ic
   module HTTP
     class Client
+      include Traceable
       attr_reader :server, :language
 
       def initialize(options = {})
-        @logger      = options[:logger]           || Ic::Logger.create(options)
+        initialize_logger( options)
         @server      = options[:server]           || 'localhost'
         @scheme      = options[:scheme]           || 'https'
         @port        = options[:port]             || 8019
@@ -63,10 +64,10 @@ module Ic
           object_id = options[:data].id      if options[:data].respond_to? :id
           session   = options[:data].session if options[:data].respond_to?(:session) && options[:data].session
         end
-        @logger.info('HTTP')  { "Sending #{verb} request to #{url} over session #{session || 'nil'}" }
-        @logger.debug('HTTP') { "  SSL verify mode: #{@client.ssl_config.verify_mode}" }
-        @logger.debug('HTTP') {'HTTP traffic <<<<<'}
-        @client.debug_dev = @logger if @logger.debug?
+        trace.info('HTTP')  { "Sending #{verb} request to #{url} over session #{session || 'nil'}" }
+        trace.debug('HTTP') { "  SSL verify mode: #{@client.ssl_config.verify_mode}" }
+        trace.debug('HTTP') {'HTTP traffic <<<<<'}
+        @client.debug_dev = logger if trace.debug?
         case verb
           when :get    then response = @client.get(url, body, headers)
           when :post   then response = @client.post(url, body, headers)
@@ -74,11 +75,11 @@ module Ic
           when :put    then response = @client.put(url, body, headers)
           else raise ArgumentError, 'verb'
         end
-        @client.debug_dev = nil if @logger.debug?
-        @logger.debug('HTTP') {'HTTP traffic >>>>>'}
-        @logger.debug('HTTP') { "Response: #{response.status} #{response.reason}" }
+        @client.debug_dev = nil if trace.debug?
+        trace.debug('HTTP') {'HTTP traffic >>>>>'}
+        trace.debug('HTTP') { "Response: #{response.status} #{response.reason}" }
         if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
-          @logger.warn('HTTP') { 'Host wants us to redirect' }
+          trace.warn('HTTP') { 'Host wants us to redirect' }
           targets = JSON.parse(response.content).keys2sym
           raise KeyError, 'alternateHostList' unless targets[:alternateHostList]
           raise HTTP::WantRedirection, targets[:alternateHostList]
@@ -88,17 +89,17 @@ module Ic
             data.merge! JSON.parse(response.content).keys2sym
             @token = data[:csrfToken] if data[:csrfToken]
             data[:location] = response.header['Location'].first if response.header['Location'] && !response.header['Location'].empty?
-            @logger.debug('HTTP') { "Token?: #{data[:csrfToken]}"}
+            trace.debug('HTTP') { "Token?: #{data[:csrfToken]}"}
           end
           data[:content_type] = response.header['Content-Type'].first
           data[:location] = response.header['Location'].first if response.header['Location'] && !response.header['Location'].empty?
-          @logger.debug('HTTP') { "Content Type: #{data[:content_type]}, location?: #{data[:location]}"}
+          trace.debug('HTTP') { "Content Type: #{data[:content_type]}, location?: #{data[:location]}"}
           return data
         else
-          @logger.error('HTTP') { "HTTP Failure: #{response.status} #{response.reason}" }
+          trace.error('HTTP') { "HTTP Failure: #{response.status} #{response.reason}" }
           error = { session: session, id: object_id }
           error.merge!(JSON.parse(response.content).keys2sym) if response.content.size > 0
-          @logger.error('HTTP') { "ICWS Failure: session=#{error[:session]}, id=#{error[:errorId]}, code=#{error[:errorCode]}, message=\"#{error[:message]}\"" }
+          trace.error('HTTP') { "ICWS Failure: session=#{error[:session]}, id=#{error[:errorId]}, code=#{error[:errorCode]}, message=\"#{error[:message]}\"" }
           case response.status
             when HTTP::Status::BAD_REQUEST
               # The response can be something like:

@@ -2,13 +2,23 @@ require 'logger'
 require 'time'
 
 module Ic
+  module Traceable
+    attr_reader :logger
+
+    def initialize_logger(options = {})
+      @logger = Ic::Logger.create(options)
+    end
+
+    alias_method :trace, :logger
+  end
+
   class Logger < ::Logger
     def self.create(options={})
       targets = targets(options)
       if targets.empty?
         logger = NullLogger.new()
       elsif targets.size == 1
-        logger = Logger.new(targets.first)
+        logger = targets.first.kind_of?(Logger) ? targets.first : Logger.new(targets.first)
       else
         logger = Logger.new(MultiIO.new(targets))
       end
@@ -22,6 +32,7 @@ module Ic
     def self.targets(options={})
       return [] if ! options[:log_to]
       case options[:log_to]
+        when Logger             then [ options[:log_to] ]
         when Array              then options[:log_to].map {|target| targets(log_to: target)}.flatten
         when String             then [ File.open(options[:log_to], 'a') ]
         when File, StringIO, IO then [ options[:log_to] ]
