@@ -119,7 +119,7 @@ module Ic
       begin
         trace.debug("Session##{@id}") { "Querying existing station connection" }
         station = @client.get path: "#{location}/station"
-        trace.info('Session') { "Connected Station: #{station}" }
+        trace.info("Session##{@id}") { "Connected Station: #{station}" }
         station
       rescue HTTP::NotFoundError => e
         error = JSON.parse(e.message).keys2sym
@@ -137,7 +137,7 @@ module Ic
         trace.debug("Session##{@id}") { "Connecting to station #{station}" }
         begin
           station_info = @client.put path: "#{location}/station", data: station, session: self
-          trace.info('Session') { "Successfully Connected to Station: #{station_info}" }
+          trace.info("Session##{@id}") { "Successfully Connected to Station: #{station_info}" }
           raise KeyError, 'location'  unless (station.location = station_info[:location])
         rescue HTTP::NotFoundError => e
           error = JSON.parse(e.message).keys2sym
@@ -147,6 +147,18 @@ module Ic
       end
     end
 
+    def unique_auth_token(seed)
+      begin
+        trace.debug("Session##{@id}") { "Requesting a Unique Authentication Token" }
+        token = @client.post path: "#{location}/unique-auth-token", data: { authTokenSeed: seed}, session: self
+        trace.info("Session##{@id}") { "Unique Authentication Token: #{token}" }
+        token[:authToken]
+      rescue HTTP::NotFoundError => e
+        error = JSON.parse(e.message).keys2sym
+        raise StationNotFoundError if error[:errorId] == '-2147221496'
+        raise e
+      end
+    end
     def to_s
       connected? ? id : ''
     end

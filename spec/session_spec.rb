@@ -158,4 +158,22 @@ describe 'Session' do
       end
     end
   end
+
+  context 'Unique Authentication Token' do
+    specify 'should be obtainable' do
+      @config[:log_to] = "tmp/test-Session-Token-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      session = Ic::Session.connect(@config)
+      expect(session).to be_truthy
+      expect(session.connected?).to be true
+      begin
+        require 'securerandom'
+
+        token = session.unique_auth_token(SecureRandom.uuid)
+        expect(token).to be_instance_of String
+      ensure
+        session.disconnect
+        expect(session.connected?).to be false
+      end
+    end
+  end
 end
