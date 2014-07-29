@@ -77,42 +77,67 @@ describe 'Session' do
     end
 
     specify 'should allow workstation' do
-      @config[:log_to] = "tmp/test-Session-Station=Workstation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-Session-Workstation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
-      session.station(type: :workstation, station: @config[:workstation])
-      station = session.station
-      expect(station[:stationSetting]).to be 1
-      expect(station[:id]).to eq @config[:workstation]
-      session.disconnect
-      expect(session.connected?).to be false
+      begin
+        session.station = Ic::WorkstationSettings.new(id: @config[:workstation])
+        station = session.station
+        expect(station[:stationSetting]).to be 1
+        expect(station[:id]).to eq @config[:workstation]
+      ensure
+        session.disconnect
+        expect(session.connected?).to be false
+      end
+    end
+
+    specify 'should allow workstation with media types' do
+      @config[:log_to] = "tmp/test-Session-Workstation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      session = Ic::Session.connect(@config)
+      expect(session).to be_truthy
+      expect(session.connected?).to be true
+      begin
+        session.station = Ic::WorkstationSettings.new(id: @config[:workstation], media_types: %w{ call sms })
+        station = session.station
+        expect(station[:stationSetting]).to be 1
+        expect(station[:id]).to eq @config[:workstation]
+      ensure
+        session.disconnect
+        expect(session.connected?).to be false
+      end
     end
 
     specify 'should allow remote station' do
-      @config[:log_to] = "tmp/test-Session-Station=RemoteStation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-Session-RemoteStation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
-      session.station(type: :remote_station, station: @config[:remotestation])
-      station = session.station
-      expect(station[:stationSetting]).to be 2
-      expect(station[:id]).to eq (@config[:remotestation])
-      session.disconnect
-      expect(session.connected?).to be false
+      begin
+        session.station = Ic::RemoteWorkstationSettings.new(id: @config[:remotestation])
+        station = session.station
+        expect(station[:stationSetting]).to be 2
+        expect(station[:id]).to eq (@config[:remotestation])
+      ensure
+        session.disconnect
+        expect(session.connected?).to be false
+      end
     end
 
     specify 'should allow remote number' do
-      @config[:log_to] = "tmp/test-Session-Station=RemoteNumber-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-Session-RemoteNumber-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
-      session.station(type: :remote_number, number: @config[:remotenumber], persistent: @config[:persistent])
-      station = session.station
-      expect(station[:stationSetting]).to be 3
-      expect(station[:id]).to eq (@config[:remotenumber])
-      session.disconnect
-      expect(session.connected?).to be false
+      begin
+        session.station = Ic::RemoteNumberSettings.new(id: @config[:remotenumber], persistent: @config[:persistent])
+        station = session.station
+        expect(station[:stationSetting]).to be 3
+        expect(station[:id]).to eq (@config[:remotenumber])
+      ensure
+        session.disconnect
+        expect(session.connected?).to be false
+      end
     end
   end
 end
