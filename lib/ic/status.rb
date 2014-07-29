@@ -1,3 +1,4 @@
+require 'time'
 require 'json'
 require 'ic/helpers'
 require 'ic/exceptions'
@@ -7,7 +8,7 @@ module Ic
   class Status
     include Traceable
 
-    attr_reader :id, :message, :group_tag, :icon_uri, :system_id
+    attr_reader :id, :message, :group_tag, :icon_uri, :system_id, :changed_at, :on_phone_at
 
     def self.find_all(session, options = {})
       session.logger.debug('Status') { "Requesting the list of statuses on session #{session}, options=#{options}" }
@@ -48,6 +49,10 @@ module Ic
       @system_id       = options[:systemId]
       @icon_uri        = options[:iconUri]
       @message         = options[:messageText]
+      @changed_at      = DateTime.parse(options[:statusChanged]) if options.include?(:statusChanged)
+      @logged_in       = options.include?(:loggedIn) ? options[:loggedIn] : false
+      @on_phone        = options.include?(:onPhone) ? options[:onPhone] : false
+      @on_phone_at     = DateTime.parse(options[:onPhoneChanged]) if options.include?(:onPhoneChanged)
     end
 
 
@@ -66,6 +71,10 @@ module Ic
     def persistent? ; @persistent end
 
     def selectable? ; @selectable end
+
+    def logged_in? ; @logged_in end
+
+    def on_phone? ; @on_phone end
 
     def to_s
       message

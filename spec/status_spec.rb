@@ -54,4 +54,19 @@ describe 'Status' do
       expect(session.connected?).to be false
     end
   end
+
+  specify 'should get the status of the logged in user' do
+    @config[:log_to] = "tmp/test-User-Status-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+    session = Ic::Session.connect(@config)
+    expect(session).to be_truthy
+    expect(session.connected?).to be true
+    begin
+      status = Ic::User.new(session: session).status_id
+      expect(status).to be_truthy
+      expect(status.id).to be_instance_of String
+    ensure
+      session.disconnect
+      expect(session.connected?).to be false
+    end
+  end
 end
