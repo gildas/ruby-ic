@@ -12,9 +12,11 @@ module Ic
 
     class UnauthorizedError < HTTPError ; end
 
-    class SessionIDExpectedError < UnauthorizedError ; end
+    class SessionIdExpectedError < UnauthorizedError ; end
 
     class AuthTokenExpectedError < UnauthorizedError ; end
+
+    class InvalidSessionIdError < UnauthorizedError ; end
 
     class TooManyRedirectionsError < HTTPError ; end
 

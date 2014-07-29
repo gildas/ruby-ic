@@ -60,7 +60,7 @@ module Ic
     def disconnect
       return self unless connected?
       @logger.debug("Session##{@id}") { "Disconnecting from #{@client.server}" }
-      @client.delete path: location
+      @client.delete path: location, session: self
       @logger.info("Session##{@id}") { "Successfully disconnected from #{@client.server}" }
       @id = nil
       self

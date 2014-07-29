@@ -54,12 +54,16 @@ module Ic
         @client.ssl_config.verify_callback = @client.ssl_config.method(:sample_verify_callback)
         # TODO: Timeout
 
-        body = nil
+        body      = nil
+        object_id = nil
+        session   = options[:session]
         if options[:data]
           headers['Content-Type'] = 'application/json'
           body = options[:data].to_json
+          object_id = options[:data].id      if options[:data].respond_to? :id
+          session   = options[:data].session if options[:data].respond_to?(:session) && options[:data].session
         end
-        @logger.info('HTTP')  { "Sending request to #{url}" }
+        @logger.info('HTTP')  { "Sending #{verb} request to #{url} over session #{session || 'nil'}" }
         @logger.debug('HTTP') { "  SSL verify mode: #{@client.ssl_config.verify_mode}" }
         @logger.debug('HTTP') {'HTTP traffic <<<<<'}
         @client.debug_dev = @logger if @logger.debug?
@@ -92,8 +96,9 @@ module Ic
           return data
         else
           @logger.error('HTTP') { "HTTP Failure: #{response.status} #{response.reason}" }
-          error = response.content.size > 0 ? JSON.parse(response.content).keys2sym : {}
-          @logger.error('HTTP') { "ICWS Failure: #{error}" }
+          error = { session: session, id: object_id }
+          error.merge!(JSON.parse(response.content).keys2sym) if response.content.size > 0
+          @logger.error('HTTP') { "ICWS Failure: session=#{error[:session]}, id=#{error[:errorId]}, code=#{error[:errorCode]}, message=\"#{error[:message]}\"" }
           case response.status
             when HTTP::Status::BAD_REQUEST
               # The response can be something like:
@@ -103,8 +108,12 @@ module Ic
               raise HTTP::NotFoundError, error.to_json if error[:errorId]   == '-2147221496'
               raise HTTP::BadRequestError, response
             when HTTP::Status::UNAUTHORIZED
-              raise SessionIDExpectedError             if error[:errorCode] == 1
-              raise AuthTokenExpectedError             if error[:errorCode] == 2
+              raise SessionIdExpectedError              if error[:errorCode] == 1
+              raise AuthTokenExpectedError              if error[:errorCode] == 2
+              if error[:errorCode] == -2147221499
+                raise InvalidSessionIdError, session.id   if session.respond_to? :id
+                raise InvalidSessionIdError
+              end
               # TODO: Add some reconnection code, when it makes sense
               raise HTTP::UnauthorizedError, error.to_json
             when HTTP::Status::NOT_FOUND
