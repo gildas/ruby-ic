@@ -3,6 +3,7 @@ require 'ic/helpers'
 require 'ic/http'
 require 'ic/exceptions'
 require 'ic/logger'
+require 'ic/user'
 
 module Ic
   class Session
@@ -11,13 +12,12 @@ module Ic
 
     BASE_LOCATION = '/icws/connection'
 
-    attr_reader :id, :application, :user, :user_display, :client
+    attr_reader :id, :application, :user, :client
 
     def initialize(options = {})
       initialize_logger( options)
-      raise MissingArgumentError, 'user'     unless (@user     = options[:user])
+      raise MissingArgumentError, 'user'     unless (@user     = User.new(session: self, id: options[:user]))
       raise MissingArgumentError, 'password' unless (@password = options[:password])
-      @user_display = @user
       @application  = options[:application] || 'icws client'
       @client       = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
       @id           = nil
@@ -33,7 +33,7 @@ module Ic
       data = {
         __type:          'urn:inin.com:connection:icAuthConnectionRequestSettings',
         applicationName: @application,
-        userID:          @user,
+        userID:          @user.id,
         password:        @password,
       }
       alternate_server_index = 0
@@ -45,7 +45,7 @@ module Ic
           raise KeyError, 'sessionId' unless (@id       = session_info[:sessionId])
           raise KeyError, 'location'  unless (@location = session_info[:location])
           raise KeyError, 'csrfToken' unless session_info[:csrfToken]
-          @user_display ||= session_info[:userDisplayName]
+          @user.display ||= session_info[:userDisplayName]
           trace.info("Session##{@id}") { "Successfully Connected to Session #{@id}, located at: #{@location}" }
           return self
         rescue HTTP::WantRedirection => e
