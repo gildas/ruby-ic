@@ -158,7 +158,7 @@ module Ic
     end
 
     def to_s
-      connected? ? "Session #{@id} connected to #{@client.server} as #{@user}" : ''
+      connected? ? id : ''
     end
   end
 end
