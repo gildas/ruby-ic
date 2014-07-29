@@ -18,7 +18,8 @@ module Ic
       if targets.empty?
         logger = NullLogger.new()
       elsif targets.size == 1
-        logger = targets.first.kind_of?(Logger) ? targets.first : Logger.new(targets.first)
+        return targets.first if targets.first.kind_of?(Logger)
+        logger = Logger.new(targets.first)
       else
         logger = Logger.new(MultiIO.new(targets))
       end

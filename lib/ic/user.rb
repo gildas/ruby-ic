@@ -20,10 +20,11 @@ module Ic
     end
 
     def status_id
-      trace.debug('User') { "Requesting the current status ids for user #{options[:user]}" }
+      trace.debug('User') { "Requesting the current status ids for user #{self}" }
       info = @session.client.get path: "/icws/#{@session.id}/status/user-statuses/#{@id}", session: @session
       trace.info('User') { "Statuses: #{info}" }
       #TODO: What do we do with the info[:notes] if present
+      info[:session] = @session
       Status.new(info)
     end
 

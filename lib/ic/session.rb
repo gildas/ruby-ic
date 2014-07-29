@@ -16,12 +16,13 @@ module Ic
 
     def initialize(options = {})
       initialize_logger(options)
-      raise MissingArgumentError, 'user'     unless (@user     = User.new(session: self, id: options[:user]))
+      raise MissingArgumentError, 'user'     unless options[:user]
       raise MissingArgumentError, 'password' unless (@password = options[:password])
       @application  = options[:application] || 'icws client'
       @client       = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
       @id           = nil
       @location     = BASE_LOCATION
+      @user         = User.new(session: self, id: options[:user])
     end
 
     def self.connect(options = {})
