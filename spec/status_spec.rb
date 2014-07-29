@@ -15,6 +15,7 @@ describe 'Status' do
       statuses = Ic::Status.find_all(session)
       expect(statuses).to be_truthy
       expect(statuses.empty?).to be false
+      expect(statuses.find_index {|status| status.id == 'Available'}).to be > -1
     ensure
       session.disconnect
       expect(session.connected?).to be false
