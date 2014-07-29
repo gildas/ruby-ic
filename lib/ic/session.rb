@@ -11,7 +11,7 @@ module Ic
 
     BASE_LOCATION = '/icws/connection'
 
-    attr_reader :id, :application, :user, :user_display
+    attr_reader :id, :application, :user, :user_display, :client
 
     def initialize(options = {})
       initialize_logger( options)
@@ -159,6 +159,7 @@ module Ic
         raise e
       end
     end
+
     def to_s
       connected? ? id : ''
     end
