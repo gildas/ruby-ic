@@ -47,7 +47,8 @@ module Ic
           raise KeyError, 'location'  unless (@location = session_info[:location])
           raise KeyError, 'csrfToken' unless session_info[:csrfToken]
           @user.display ||= session_info[:userDisplayName]
-          trace.info("Session##{@id}") { "Successfully Connected to Session #{@id}, located at: #{@location}" }
+          logger.add_context(session: @id)
+          trace.info('Session') { "Successfully Connected to Session #{@id}, located at: #{@location}" }
           return self
         rescue HTTP::WantRedirection => e
           trace.warn('Session') { 'We need to check other servers' }
@@ -61,9 +62,10 @@ module Ic
 
     def disconnect
       return self unless connected?
-      trace.debug("Session##{@id}") { "Disconnecting from #{@client.server}" }
+      trace.debug('Session') { "Disconnecting from #{@client.server}" }
       @client.delete path: location, session: self
-      trace.info("Session##{@id}") { "Successfully disconnected from #{@client.server}" }
+      trace.info('Session') { "Successfully disconnected from #{@client.server}" }
+      logger.remove_context(session: @id)
       @id = nil
       self
     end
@@ -118,9 +120,9 @@ module Ic
 
     def station
       begin
-        trace.debug("Session##{@id}") { "Querying existing station connection" }
+        trace.debug('Session') { "Querying existing station connection" }
         station = @client.get path: "#{location}/station"
-        trace.info("Session##{@id}") { "Connected Station: #{station}" }
+        trace.info('Session') { "Connected Station: #{station}" }
         station
       rescue HTTP::NotFoundError => e
         error = JSON.parse(e.message).keys2sym
@@ -132,13 +134,13 @@ module Ic
     def station=(station)
       if station.nil?
         # Disconnect from the current station
-        trace.debug("Session##{@id}") { 'Disconnecting from all stations' }
+        trace.debug('Session') { 'Disconnecting from all stations' }
         @client.delete path: "#{location}/station", session: self
       else
-        trace.debug("Session##{@id}") { "Connecting to station #{station}" }
+        trace.debug('Session') { "Connecting to station #{station}" }
         begin
           station_info = @client.put path: "#{location}/station", data: station, session: self
-          trace.info("Session##{@id}") { "Successfully Connected to Station: #{station_info}" }
+          trace.info('Session') { "Successfully Connected to Station: #{station_info}" }
           raise KeyError, 'location'  unless (station.location = station_info[:location])
         rescue HTTP::NotFoundError => e
           error = JSON.parse(e.message).keys2sym
@@ -150,9 +152,9 @@ module Ic
 
     def unique_auth_token(seed)
       begin
-        trace.debug("Session##{@id}") { "Requesting a Unique Authentication Token" }
+        trace.debug('Session') { "Requesting a Unique Authentication Token" }
         token = @client.post path: "#{location}/unique-auth-token", data: { authTokenSeed: seed}, session: self
-        trace.info("Session##{@id}") { "Unique Authentication Token: #{token}" }
+        trace.info('Session') { "Unique Authentication Token: #{token}" }
         token[:authToken]
       rescue HTTP::NotFoundError => e
         error = JSON.parse(e.message).keys2sym

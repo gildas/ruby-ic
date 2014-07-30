@@ -57,14 +57,13 @@ module Ic
 
         body      = nil
         object_id = nil
-        session   = options[:session]
         if options[:data]
           headers['Content-Type'] = 'application/json'
           body = options[:data].to_json
           object_id = options[:data].id      if options[:data].respond_to? :id
           session   = options[:data].session if options[:data].respond_to?(:session) && options[:data].session
         end
-        trace.info('HTTP')  { "Sending #{verb} request to #{url} over session #{session || 'nil'}" }
+        trace.info('HTTP')  { "Sending #{verb} request to #{url}" }
         trace.debug('HTTP') { "  SSL verify mode: #{@client.ssl_config.verify_mode}" }
         trace.debug('HTTP') {'HTTP traffic <<<<<'}
         @client.debug_dev = logger if trace.debug?

@@ -11,7 +11,7 @@ module Ic
     attr_reader :id, :message, :group_tag, :icon_uri, :system_id, :changed_at, :on_phone_at
 
     def self.find_all(session, options = {})
-      session.trace.debug('Status') { "Requesting the list of statuses on session #{session}, options=#{options}" }
+      session.trace.debug('Status') { "Requesting list of statuses, options=#{options}" }
       info = session.client.get path: "/icws/#{session.id}/status/status-messages", session: session
       session.trace.info('Status') { "Statuses: #{info}" }
       info[:statusMessageList].collect { |item| Status.new(item.merge(session: session)) }
@@ -19,13 +19,13 @@ module Ic
 
     def self.find_all_ids(session, options = {})
       if options[:user]
-        session.trace.debug('Status') { "Requesting the list of status ids for user #{options[:user]} on session #{session}" }
+        session.trace.debug('Status') { "Requesting the list of status ids for user #{options[:user]}" }
         user_id = options[:user].respond_to?(:id) ? options[:user].id : options[:user]
         info = session.client.get path: "/icws/#{session.id}/status/status-messages-user-access/#{user_id}", session: session
         session.trace.info('Status') { "Statuses: #{info}" }
         info[:statusMessages]
       else
-        session.trace.debug('Status') { "Requesting the list of status ids on session #{session}" }
+        session.trace.debug('Status') { "Requesting list of status ids, options=#{options}" }
         info = session.client.get path: "/icws/#{session.id}/status/status-messages", session: session
         session.trace.info('Status') { "Statuses: #{info}" }
         info[:statusMessageList].collect { |item| item[:statusId] }

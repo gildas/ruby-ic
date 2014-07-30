@@ -17,10 +17,11 @@ module Ic
       @session = options[:session]
       @id      = options[:id] || @session.user.id
       @display = options[:display] || @id
+      logger.add_context(user: @id)
     end
 
     def status_id
-      trace.debug('User') { "Requesting the current status ids for user #{self}" }
+      trace.debug('User') { "Requesting the current status ids" }
       info = @session.client.get path: "/icws/#{@session.id}/status/user-statuses/#{@id}", session: @session
       trace.info('User') { "Statuses: #{info}" }
       #TODO: What do we do with the info[:notes] if present
