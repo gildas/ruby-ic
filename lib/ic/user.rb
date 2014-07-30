@@ -7,7 +7,7 @@ require 'ic/status'
 module Ic
   class User
     include Traceable
-    include Requestor
+    include HTTP::Requestor
 
     attr_reader :id, :display
     attr_writer :display
@@ -18,14 +18,14 @@ module Ic
       @session = options[:session]
       @id      = options[:id] || @session.user.id
       @display = options[:display] || @id
-      client   = @session.client
+      self.client = @session.client
       logger.add_context(user: @id)
     end
 
     def status_id
-      trace.debug('User') { "Requesting the current status ids" }
-      info = @session.client.get path: "/icws/#{@session.id}/status/user-statuses/#{@id}", session: @session
-      trace.info('User') { "Statuses: #{info}" }
+      trace.debug('User') { 'Requesting the current status ids' }
+      info = http_get path: "/icws/#{@session.id}/status/user-statuses/#{@id}"
+      trace.info('User') { "Status: #{info}" }
       info[:session] = @session
       Status.new(info)
     end
