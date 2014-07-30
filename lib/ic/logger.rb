@@ -33,6 +33,10 @@ module Ic
       formatter.add_context(context)
     end
 
+    def remove_context(context = {})
+      formatter.remove_context(context)
+    end
+
     private
     def self.targets(options={})
       return [] if ! options[:log_to]
