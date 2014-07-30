@@ -34,7 +34,7 @@ module Ic
 
     def initialize(options = {})
       options[:log_to] = options[:session].logger unless options[:log_to]
-      initialize_logger(options)
+      self.logger      = options
       @session         = options[:session]
       @can_have_date   = options.include?(:canHaveDate) ? options[:canHaveDate] : false
       @can_have_time   = options.include?(:canHaveTime) ? options[:canHaveTime] : false

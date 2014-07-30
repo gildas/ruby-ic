@@ -5,7 +5,7 @@ module Ic
   module Traceable
     attr_reader :logger
 
-    def initialize_logger(options = {})
+    def logger=(options = {})
       @logger = Ic::Logger.create(options)
     end
 

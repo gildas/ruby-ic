@@ -22,15 +22,15 @@ module Ic
       attr_reader :server, :language
 
       def initialize(options = {})
-        initialize_logger( options)
-        @server      = options[:server]           || 'localhost'
-        @scheme      = options[:scheme]           || 'https'
-        @port        = options[:port]             || 8019
-        @uri         = URI.parse("#{@scheme}://#{@server}:#{@port}")
-        @language    = options[:language]         || 'en-us'
-        @token       = nil
-        proxy        = ENV['HTTP_PROXY'] || options[:proxy]
-        @client      = HTTPClient.new(proxy)
+        self.logger = options
+        @server     = options[:server]           || 'localhost'
+        @scheme     = options[:scheme]           || 'https'
+        @port       = options[:port]             || 8019
+        @uri        = URI.parse("#{@scheme}://#{@server}:#{@port}")
+        @language   = options[:language]         || 'en-us'
+        @token      = nil
+        proxy       = ENV['HTTP_PROXY'] || options[:proxy]
+        @client     = HTTPClient.new(proxy)
       end
 
       def server=(server)

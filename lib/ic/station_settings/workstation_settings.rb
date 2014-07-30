@@ -17,7 +17,7 @@ module Ic
 
     def initialize(options = {})
       super(options)
-      initialize_logger(options)
+      self.logger = options
       trace.debug('Workstation') { "Workstation: id=#{@id}, ready? #{ready?}" }
     end
 

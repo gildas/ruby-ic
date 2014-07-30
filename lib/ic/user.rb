@@ -14,10 +14,10 @@ module Ic
 
     def initialize(options = {})
       options[:log_to] = options[:session].logger unless options[:log_to]
-      initialize_logger(options)
-      @session = options[:session]
-      @id      = options[:id] || @session.user.id
-      @display = options[:display] || @id
+      self.logger = options
+      @session    = options[:session]
+      @id         = options[:id] || @session.user.id
+      @display    = options[:display] || @id
       self.client = @session.client
       logger.add_context(user: @id)
     end

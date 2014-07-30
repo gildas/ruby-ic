@@ -17,9 +17,9 @@ module Ic
     attr_reader :id, :application, :user, :client
 
     def initialize(options = {})
-      initialize_logger(options)
       raise MissingArgumentError, 'user'     unless options[:user]
       raise MissingArgumentError, 'password' unless (@password = options[:password])
+      self.logger   = options
       @application  = options[:application] || 'icws client'
       self.client   = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
       @id           = nil

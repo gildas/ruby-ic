@@ -19,7 +19,7 @@ module Ic
 
     def initialize(options = {})
       super(options)
-      initialize_logger(options)
+      self.logger    = options
       @remote_number = options[:remote_number] || options[:remoteNumber]
     end
 
