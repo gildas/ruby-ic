@@ -7,6 +7,7 @@ require 'ic/status'
 module Ic
   class User
     include Traceable
+    include Requestor
 
     attr_reader :id, :display
     attr_writer :display
@@ -17,6 +18,7 @@ module Ic
       @session = options[:session]
       @id      = options[:id] || @session.user.id
       @display = options[:display] || @id
+      client   = @session.client
       logger.add_context(user: @id)
     end
 

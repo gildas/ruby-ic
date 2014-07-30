@@ -8,7 +8,15 @@ module Ic
   module HTTP
     module Requestor
 
+      attr_reader :client
+      attr_writer :client
+
+      def http_get(options={})    ;  @client.request :get,    options ;  end
+      def http_post(options={})   ;  @client.request :post,   options ;  end
+      def http_delete(options={}) ;  @client.request :delete, options ;  end
+      def http_put(options={})    ;  @client.request :put,    options ;  end
     end
+
     class Client
       include Traceable
       attr_reader :server, :language
