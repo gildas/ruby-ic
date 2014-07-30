@@ -61,7 +61,7 @@ describe 'Status' do
     expect(session).to be_truthy
     expect(session.connected?).to be true
     begin
-      status = session.user.status_id
+      status = session.user.status
       expect(status).to be_truthy
       expect(status.id).to be_instance_of String
     ensure
