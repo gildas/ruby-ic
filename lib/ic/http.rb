@@ -6,6 +6,9 @@ require 'ic/logger'
 
 module Ic
   module HTTP
+    module Requestor
+
+    end
     class Client
       include Traceable
       attr_reader :server, :language
