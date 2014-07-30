@@ -29,6 +29,10 @@ module Ic
       logger
     end
 
+    def add_context(context = {})
+      formatter.add_context(context)
+    end
+
     private
     def self.targets(options={})
       return [] if ! options[:log_to]
@@ -43,8 +47,23 @@ module Ic
   end
 
   class Formatter < ::Logger::Formatter
+    def initialize
+      super
+      @contexts = {}
+    end
+
     def call(severity, time, progname, message)
-      "%s [%d][%s] %5s: %s\n" % [time.iso8601, $$, progname, severity, msg2str(message)]
+      context_items =  @contexts.collect { |context| "#{context.first}:#{context.last}"}
+      context_info  = context_items.empty? ? '' : "[#{context_items.join(',')}]"
+      "%s [%d][%s]%s %5s: %s\n" % [time.iso8601, $$, progname, context_info, severity, msg2str(message)]
+    end
+
+    def add_context(context = {})
+      @contexts.merge! context
+    end
+
+    def remove_context(context)
+      @contexts.delete(context)
     end
   end
 

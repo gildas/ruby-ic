@@ -23,6 +23,42 @@ describe 'Logger' do
     }.to output.to_stdout
   end
 
+  specify 'should create support log levels' do
+    expect {
+      logger = Ic::Logger.create(log_to: $stdout, log_level: Logger::DEBUG)
+      expect(logger).to be_truthy
+      logger.debug "This text should be displayed on the standard output"
+    }.to output.to_stdout
+  end
+
+  specify 'should create support changes to log levels' do
+    expect {
+      logger = Ic::Logger.create(log_to: $stdout)
+      expect(logger).to be_truthy
+      expect(logger.info?).to be false
+      logger.info  "This text should not be displayed on the standard output"
+      logger.level = Logger::INFO
+      expect(logger.info?).to be true
+      logger.info "This text should be displayed on the standard output"
+    }.to output.to_stdout
+  end
+
+  specify 'should support contextual information' do
+    text = "This text should be written in a file"
+    logger = Ic::Logger.create(log_to: @test_filename)
+    expect(logger).to be_truthy
+    logger.add_context(id: 'test')
+    logger.error text
+    logger.close
+    file = File.open(@test_filename)
+    expect(file).to be_a_kind_of File
+    content = file.read
+    expect(content).to include text
+    expect(content).to include '[id:test]'
+    File.delete(@test_filename)
+    expect(File.exists?(@test_filename)).to be false
+  end
+
   specify 'should create loggers on a filename' do
     text = "This text should be written in a file"
     logger = Ic::Logger.create(log_to: @test_filename)
