@@ -5,12 +5,16 @@ describe 'Session' do
   before do
     @config = load_config('spec/login.json')
     @config[:log_level] = Logger::DEBUG
-
-    #default station configurations
-    @config[:workstation]   ||= '7001'
-    @config[:remotestation] ||= 'gildasmobile'
-    @config[:remotenumber]  ||= '+13178723000'
-    @config[:persistent]    ||= false
+    [:application,
+     :server,
+     :user,
+     :password,
+     :workstation,
+     :remotestation,
+     :remotenumber].each do |key|
+      raise ArgumentError, "Missing: #{key}" unless @config[key]
+    end
+     @config[:persistent] ||= false
   end
 
   context 'valid server and credentials' do
