@@ -8,6 +8,8 @@ require 'ic/user'
 module Ic
   class Session
     include Traceable
+    include HTTP::Requestor
+
     MAX_REDIRECTIONS = 5
 
     BASE_LOCATION = '/icws/connection'
@@ -19,7 +21,7 @@ module Ic
       raise MissingArgumentError, 'user'     unless options[:user]
       raise MissingArgumentError, 'password' unless (@password = options[:password])
       @application  = options[:application] || 'icws client'
-      @client       = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
+      self.client   = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
       @id           = nil
       @location     = BASE_LOCATION
       @user         = User.new(session: self, id: options[:user])
@@ -38,11 +40,11 @@ module Ic
         password:        @password,
       }
       alternate_server_index = 0
-      server = @client.server
+      server = client.server
       loop do
         trace.info('Session') { "Connecting application \"#{@application}\" to #{server} as #{@user}" }
         begin
-          session_info = @client.post server: server, path: BASE_LOCATION, data: data
+          session_info = http_post server: server, path: BASE_LOCATION, data: data
           raise KeyError, 'sessionId' unless (@id       = session_info[:sessionId])
           raise KeyError, 'location'  unless (@location = session_info[:location])
           raise KeyError, 'csrfToken' unless session_info[:csrfToken]
@@ -62,9 +64,9 @@ module Ic
 
     def disconnect
       return self unless connected?
-      trace.debug('Session') { "Disconnecting from #{@client.server}" }
-      @client.delete path: location, session: self
-      trace.info('Session') { "Successfully disconnected from #{@client.server}" }
+      trace.debug('Session') { "Disconnecting from #{client.server}" }
+      http_delete path: location, session: self
+      trace.info('Session') { "Successfully disconnected from #{client.server}" }
       logger.remove_context(session: @id)
       @id = nil
       self
@@ -87,7 +89,7 @@ module Ic
     end
 
     def version
-      version = @client.get path: "#{BASE_LOCATION}/version"
+      version = http_get path: "#{BASE_LOCATION}/version"
       trace.info('Session') { "Server version: #{version}" }
       version
     end
@@ -102,7 +104,7 @@ module Ic
     def feature?(feature)
       begin
         trace.debug('Session') { "Querying feature \"#{feature}\""}
-        feature = @client.get path: "#{BASE_LOCATION}/features/#{feature}"
+        feature = http_get path: "#{BASE_LOCATION}/features/#{feature}"
         trace.info('Session') { "Supported feature: #{feature}" }
         true
       rescue HTTP::BadRequestError => e
@@ -113,7 +115,7 @@ module Ic
 
     def feature(feature)
       trace.debug('Session') { "Querying feature \"#{feature}\""}
-      feature = @client.get path: "#{BASE_LOCATION}/features/#{feature}"
+      feature = http_get path: "#{BASE_LOCATION}/features/#{feature}"
       trace.info('Session') { "Supported feature: #{feature}" }
       feature
     end
@@ -121,7 +123,7 @@ module Ic
     def station
       begin
         trace.debug('Session') { "Querying existing station connection" }
-        station = @client.get path: "#{location}/station"
+        station = http_get path: "#{location}/station"
         trace.info('Session') { "Connected Station: #{station}" }
         station
       rescue HTTP::NotFoundError => e
@@ -135,11 +137,11 @@ module Ic
       if station.nil?
         # Disconnect from the current station
         trace.debug('Session') { 'Disconnecting from all stations' }
-        @client.delete path: "#{location}/station", session: self
+        http_delete path: "#{location}/station", session: self
       else
         trace.debug('Session') { "Connecting to station #{station}" }
         begin
-          station_info = @client.put path: "#{location}/station", data: station, session: self
+          station_info = http_put path: "#{location}/station", data: station, session: self
           trace.info('Session') { "Successfully Connected to Station: #{station_info}" }
           raise KeyError, 'location'  unless (station.location = station_info[:location])
         rescue HTTP::NotFoundError => e
@@ -152,8 +154,8 @@ module Ic
 
     def unique_auth_token(seed)
       begin
-        trace.debug('Session') { "Requesting a Unique Authentication Token" }
-        token = @client.post path: "#{location}/unique-auth-token", data: { authTokenSeed: seed}, session: self
+        trace.debug('Session') { 'Requesting a Unique Authentication Token' }
+        token = http_post path: "#{location}/unique-auth-token", data: { authTokenSeed: seed}, session: self
         trace.info('Session') { "Unique Authentication Token: #{token}" }
         token[:authToken]
       rescue HTTP::NotFoundError => e
