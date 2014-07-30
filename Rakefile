@@ -1,4 +1,4 @@
-require 'JSON'
+require 'json'
 require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
 
@@ -29,7 +29,7 @@ Dir.glob('spec/login-*.json').each do |filename|
     file 'spec/login.json' => filename do
       cp filename, 'spec/login.json', :verbose => true
     end
-    desc "matches login.json per network"
+    desc 'matches login.json per network'
     task :config_file => 'spec/login.json'
     break
   end
