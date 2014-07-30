@@ -12,7 +12,7 @@ module Ic
 
     def self.find_all(session, options = {})
       session.trace.debug('Status') { "Requesting list of statuses, options=#{options}" }
-      info = session.client.get path: "/icws/#{session.id}/status/status-messages", session: session
+      info = session.http_get path: "/icws/#{session.id}/status/status-messages", session: session
       session.trace.info('Status') { "Statuses: #{info}" }
       info[:statusMessageList].collect { |item| Status.new(item.merge(session: session)) }
     end
@@ -21,12 +21,12 @@ module Ic
       if options[:user]
         session.trace.debug('Status') { "Requesting the list of status ids for user #{options[:user]}" }
         user_id = options[:user].respond_to?(:id) ? options[:user].id : options[:user]
-        info = session.client.get path: "/icws/#{session.id}/status/status-messages-user-access/#{user_id}", session: session
+        info = session.http_get path: "/icws/#{session.id}/status/status-messages-user-access/#{user_id}", session: session
         session.trace.info('Status') { "Statuses: #{info}" }
         info[:statusMessages]
       else
         session.trace.debug('Status') { "Requesting list of status ids, options=#{options}" }
-        info = session.client.get path: "/icws/#{session.id}/status/status-messages", session: session
+        info = session.http_get path: "/icws/#{session.id}/status/status-messages", session: session
         session.trace.info('Status') { "Statuses: #{info}" }
         info[:statusMessageList].collect { |item| item[:statusId] }
       end
