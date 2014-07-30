@@ -21,6 +21,7 @@ def local_ip
 end
 
 my_ip = local_ip
+task :config_file do ; end
 Dir.glob('spec/login-*.json').each do |filename|
   config = { 'network' => '' }
   File.open(filename) { |file| config = JSON.parse(file.read) }
