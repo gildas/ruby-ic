@@ -11,10 +11,10 @@ module Ic
       attr_reader :client
       attr_writer :client
 
-      def http_get(options={})    ;  @client.request :get,    options ;  end
-      def http_post(options={})   ;  @client.request :post,   options ;  end
-      def http_delete(options={}) ;  @client.request :delete, options ;  end
-      def http_put(options={})    ;  @client.request :put,    options ;  end
+      def http_get(options={})    ;  @client.request :get,    options end
+      def http_post(options={})   ;  @client.request :post,   options end
+      def http_delete(options={}) ;  @client.request :delete, options end
+      def http_put(options={})    ;  @client.request :put,    options end
     end
 
     class Client
@@ -38,21 +38,10 @@ module Ic
         @uri    = URI.parse("#{@scheme}://#{@server}:#{@port}")
       end
 
-      def get(options = {})
-        request :get, options
-      end
-
-      def post(options = {})
-        request :post, options
-      end
-
-      def delete(options = {})
-        request :delete, options
-      end
-
-      def put(options = {})
-        request :put, options
-      end
+      def get(options = {})    ; request :get,    options end
+      def post(options = {})   ; request :post,   options end
+      def delete(options = {}) ; request :delete, options end
+      def put(options = {})    ; request :put,    options end
 
       def request(verb, options = {})
         # cookies are managed automatically by the httpclient gem
