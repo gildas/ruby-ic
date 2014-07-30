@@ -8,7 +8,7 @@ module Ic
   class Status
     include Traceable
 
-    attr_reader :id, :message, :group_tag, :icon_uri, :system_id, :changed_at, :on_phone_at
+    attr_reader :id, :message, :group_tag, :icon_uri, :system_id, :changed_at, :on_phone_at, :notes
 
     def self.find_all(session, options = {})
       session.trace.debug('Status') { "Requesting list of statuses, options=#{options}" }
@@ -54,6 +54,7 @@ module Ic
       @logged_in       = options.include?(:loggedIn) ? options[:loggedIn] : false
       @on_phone        = options.include?(:onPhone) ? options[:onPhone] : false
       @on_phone_at     = DateTime.parse(options[:onPhoneChanged]) if options.include?(:onPhoneChanged)
+      @notes           = options[:notes] || ''
     end
 
 
