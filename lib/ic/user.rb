@@ -31,6 +31,7 @@ module Ic
     end
 
     def status=(options = {})
+      options = { status: options } if options.kind_of?(String) || options.kind_of?(Status)
       raise MissingArgumentError, 'status' unless options[:status]
       data = {}
       if options[:status].respond_to?(:id)
@@ -45,7 +46,6 @@ module Ic
           }
         end
       else
-        #data[:statusId]      = options[:status].respond_to?(:id) ? options[:status].id : options[:status]
         data[:statusId]    = options[:status]
       end
       data[:forwardNumber] = options[:forward_to] if options.include?(:forward_to)
@@ -53,6 +53,7 @@ module Ic
       trace.debug('User') { "Setting the status to #{data[:statusId]}" }
       info = http_put path: "/icws/#{@session.id}/status/user-statuses/#{@id}", data: data
       trace.info('User') { "Status: #{info}" }
+      info[:requestId]
     end
 
     def to_s
