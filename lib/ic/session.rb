@@ -165,6 +165,10 @@ module Ic
       end
     end
 
+    def acquire(licenses)
+      results = http_post path: "/icws/#{@id}/licenses", data: licenses
+    end
+    
     def to_s
       connected? ? id : ''
     end
