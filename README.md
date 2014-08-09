@@ -29,7 +29,7 @@ in the spec folder, write a **login.json** file that contains the server and the
   "application":   "icws rspec test",
   "server":        "my_cic_server.acme.com",
   "user":          "gildas.cherruel",
-  "password:       "s3cr3t",
+  "password":      "s3cr3t",
   "workstation":   "7001",
   "remotestation": "gildasmobile",
   "remotenumber":  "0123456789",
