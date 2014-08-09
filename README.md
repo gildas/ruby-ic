@@ -22,17 +22,38 @@ Or install it yourself as:
 TODO: Write usage instructions here
 
 ## Testing
-in the spec folder, write a login.json file that contains the server and the credentials for the test:
+in the spec folder, write a **login.json** file that contains the server and the credentials for the test:
 ```json
 {
-  "server": "my_cic_server.acme.com",
-  "user":   "gildas.cherruel",
-  "password: "s3cr3t",
+  "network":       "192.168.116.\\d{0,3}",
+  "application":   "icws rspec test",
+  "server":        "my_cic_server.acme.com",
+  "user":          "gildas.cherruel",
+  "password:       "s3cr3t",
+  "workstation":   "7001",
+  "remotestation": "gildasmobile",
+  "remotenumber":  "0123456789",
+  "persistent":    false
 }
 ```
-This file is ignored by git, so there should be no risk of accidentaly give your password to the community!
+The _workstation_, _remotestation_, _remotenumber_ + _persistent_ keys are used when testing the **Connection** object
+with various types of **StationSettings**.
 
-By default, the connections will be done over https on port 8019. You can change that by adding "scheme" and "port" to the login.json file.
+By default, the connections will be done over https on port 8019.
+You can change that by adding _scheme_ and _port_ to the **login.json** file.
+
+if you connect to various networks and need to test with different servers (like on a laptop at home or at work),
+simply write several **login-my_location.json** files. Make sure the network key matches the network you want to test in.
+The Rake tasks will automatically update the login.json link for you.
+You can also force the network by providing the network via the environment:
+
+```bash
+$ rake network=10.0.0.1
+```
+Note: VPNs are not detected properly yet.
+
+All json files in the spec folder are ignored by git,
+so there should be no risk of accidentally give your password to the community!
 
 ## Contributing
 
