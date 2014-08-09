@@ -50,7 +50,6 @@ You can also force the network by providing the network via the environment:
 ```bash
 $ rake network=10.0.0.1
 ```
-Note: VPNs are not detected properly yet.
 
 All json files in the spec folder are ignored by git,
 so there should be no risk of accidentally give your password to the community!

@@ -8,7 +8,11 @@ RSpec::Core::RakeTask.new
 desc "Links the configuration file to the current network"
 task :prep_config do
   my_config = nil
-  Socket.getifaddrs.map { |i| i.addr.ip_address if i.addr.ipv4? }.compact.each do |local_ip|
+  addresses = []
+  addresses << ENV['network'] if ENV['network']
+  addresses += Socket.getifaddrs.map { |i| i.addr.ip_address if i.addr.ipv4? }.compact
+  raise ArgumentError, "Cannot find any network address to work with" if addresses.empty?
+  addresses.each do |local_ip|
     Dir.glob('spec/login-*.json').each do |filename|
       config = { 'network' => '' }
       File.open(filename) { |file| config = JSON.parse(file.read) }
@@ -24,7 +28,7 @@ task :prep_config do
       end
     end
   end
-  raise NotImplementedError, "Cannot find a configuration for any of my netoworks" unless my_config
+  raise NotImplementedError, "Cannot find a configuration for any of my networks (#{addresses.join(', ')})" unless my_config
 end
 desc "Runs the RSpec tests after linking the configuration"
 task :test => [:prep_config, :spec]
