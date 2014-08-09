@@ -20,19 +20,25 @@ def local_ip
   end
 end
 
-my_ip = local_ip
-task :config_file do ; end
-Dir.glob('spec/login-*.json').each do |filename|
-  config = { 'network' => '' }
-  File.open(filename) { |file| config = JSON.parse(file.read) }
-  if my_ip =~ /#{config['network']}/
-    file 'spec/login.json' => filename do
-      cp filename, 'spec/login.json', :verbose => true
+desc "Links the configuration file to the current network"
+task :prep_config do
+  my_config = nil
+  my_ip     = ENV['network'] || local_ip
+  task :config_file do ; end
+  Dir.glob('spec/login-*.json').each do |filename|
+    config = { 'network' => '' }
+    File.open(filename) { |file| config = JSON.parse(file.read) }
+    if my_ip =~ /#{config['network']}/
+      file 'spec/login.json' => filename do
+        cp filename, 'spec/login.json', :verbose => true
+      end
+      desc 'matches login.json per network'
+      task :config_file => 'spec/login.json'
+      my_config = filename
+      break
     end
-    desc 'matches login.json per network'
-    task :config_file => 'spec/login.json'
-    break
   end
+  raise NotImplementedError, "Cannot find a configuration for #{my_ip}" unless my_config
 end
-
-task :test => [:config_file, :spec]
+desc "Runs the RSpec tests after linking the configuration"
+task :test => [:prep_config, :spec]
