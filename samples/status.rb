@@ -1,10 +1,14 @@
 #! /usr/bin/env ruby
 require 'optparse'
+require 'io/console'
 require 'ic'
 
-options = {}
+def prompt_password(prompt='Password: ')
+  printf(prompt)
+  STDIN.noecho(&:gets).chomp
+end
 
-
+options  = {}
 optparse = OptionParser.new do|opts|
   # Set a banner, displayed at the top
   # of the help screen.
@@ -12,11 +16,11 @@ optparse = OptionParser.new do|opts|
 
   # Define the options, and what they do
   options[:verbose] = false
-  opts.on( '-v', '--verbose', 'Output more information' )         { options[:log_level] = Logger::DEBUG }
-  opts.on( '-l', '--logfile FILE', 'Write log to FILE' )          { |file| options[:log_to] = file }
+  opts.on( '-v', '--verbose', 'Output more information' )          { options[:log_level] = Logger::DEBUG }
+  opts.on( '-l', '--logfile FILE', 'Write log to FILE' )           { |file| options[:log_to] = file }
   opts.on('-s', '--server SERVER', 'Connect to the CIC SERVER')    { |server| options[:server] = server }
   opts.on('-u', '--user USER', 'User to connect with')             { |user| options[:user] = user }
-  opts.on('-p', '--password PASSWORD', 'Password to connect with') { |password| options[:password] = password }
+  opts.on('-p', '--password [PASSWORD]', 'Password to connect with') { |password| options[:password] = password }
 
   # This displays the help screen, all programs are
   # assumed to have this option.
@@ -27,6 +31,7 @@ optparse = OptionParser.new do|opts|
 end
 
 optparse.parse!
+options[:password] = prompt_password unless options[:password]
 
 session = Ic::Session.connect(options)
 
