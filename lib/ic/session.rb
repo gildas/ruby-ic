@@ -166,7 +166,7 @@ module Ic
       end
     end
 
-    def acquire(*licenses)
+    def acquire_licenses(*licenses)
       return if licenses.empty?
       data = {
           licenseList: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
@@ -175,7 +175,21 @@ module Ic
       raise ArgumentError, 'licenseOperationResultList' unless results[:licenseOperationResultList]
       results[:licenseOperationResultList].collect { |item| License.new(item.merge(session: self)) }
     end
-    
+
+    def replace_licenses(*licenses)
+      return if licenses.empty?
+      data = {
+          licenseList: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
+      }
+      results = http_put path: "/icws/#{@id}/licenses", data: data
+      raise ArgumentError, 'licenseOperationResultList' unless results[:licenseOperationResultList]
+      results[:licenseOperationResultList].collect { |item| License.new(item.merge(session: self)) }
+    end
+
+    def release_all_licenses
+      http_delete path: "/icws/#{@id}/licenses"
+    end
+
     def to_s
       connected? ? id : ''
     end

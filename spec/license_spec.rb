@@ -13,7 +13,7 @@ describe 'License' do
     expect(session).to be_truthy
     expect(session.connected?).to be true
     begin
-      licenses = session.acquire('I3_ACCESS_CLIENT')
+      licenses = session.acquire_licenses('I3_ACCESS_CLIENT')
       expect(licenses).to be_truthy
       expect(licenses.size).to be 1
       expect(licenses.first.available?).to be true
