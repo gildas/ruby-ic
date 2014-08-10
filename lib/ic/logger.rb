@@ -72,8 +72,10 @@ module Ic
   end
 
   class NullLogger < ::Logger
-    def initialize(*args)  ; end
-    def add(*args, &block) ; end
+    def initialize(*args)            ; end
+    def add(*args, &block)           ; end
+    def add_context(context = {})    ; end
+    def remove_context(context = {}) ; end
   end
 
   class MultiIO
