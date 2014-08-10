@@ -169,7 +169,7 @@ module Ic
     def acquire(*licenses)
       return if licenses.empty?
       data = {
-          licenseList: licenses
+          licenseList: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
       }
       results = http_post path: "/icws/#{@id}/licenses", data: data
       raise ArgumentError, 'licenseOperationResultList' unless results[:licenseOperationResultList]
