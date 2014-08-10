@@ -118,6 +118,9 @@ module Ic
               raise HTTP::UnauthorizedError, error.to_json
             when HTTP::Status::NOT_FOUND
               raise HTTP::NotFoundError, error.to_json
+            when HTTP::Status::INTERNAL
+              raise RuntimeError if error[:errorCode] = -2147467259
+              raise RuntimeError, error.to_json
             else
               raise HTTP::HTTPError, error.to_json
           end
