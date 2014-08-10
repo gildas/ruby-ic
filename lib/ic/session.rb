@@ -165,8 +165,12 @@ module Ic
       end
     end
 
-    def acquire(licenses)
-      results = http_post path: "/icws/#{@id}/licenses", data: licenses
+    def acquire(*licenses)
+      return if licenses.empty?
+      data = {
+          licenseList: licenses
+      }
+      results = http_post path: "/icws/#{@id}/licenses", data: data
     end
     
     def to_s
