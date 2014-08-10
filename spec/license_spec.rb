@@ -13,10 +13,11 @@ describe 'License' do
     expect(session).to be_truthy
     expect(session.connected?).to be true
     begin
-      results = session.acquire('I3_ACCESS_CLIENT')
-      expect(results).to be_truthy
-      expect(results.empty?).to be false
-      #expect(results.find_index {|status| status.id == 'Available'}).to be > -1
+      licenses = session.acquire('I3_ACCESS_CLIENT')
+      expect(licenses).to be_truthy
+      expect(licenses.size).to be 1
+      expect(licenses.first.available?).to be true
+      expect(licenses.first.id).to eq 'I3_ACCESS_CLIENT'
     ensure
       session.disconnect
       expect(session.connected?).to be false

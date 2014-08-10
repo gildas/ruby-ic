@@ -4,6 +4,7 @@ require 'ic/http'
 require 'ic/exceptions'
 require 'ic/logger'
 require 'ic/user'
+require 'ic/license'
 
 module Ic
   class Session
@@ -171,6 +172,8 @@ module Ic
           licenseList: licenses
       }
       results = http_post path: "/icws/#{@id}/licenses", data: data
+      raise ArgumentError, 'licenseOperationResultList' unless results[:licenseOperationResultList]
+      results[:licenseOperationResultList].collect { |item| License.new(item.merge(session: self)) }
     end
     
     def to_s
