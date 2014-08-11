@@ -92,6 +92,10 @@ module Ic
         raise MissingArgumentError, 'user or users'
       end
       session.http_put path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses", data: data
+      pause = options[:check_every] || 1
+      Thread.new {
+        sleep(pause) until block.yield(session.messages)
+      }
     end
 
     def to_s
