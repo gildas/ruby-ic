@@ -8,7 +8,8 @@ require 'ic/country'
 require 'ic/language'
 require 'ic/user'
 require 'ic/status'
-
+require 'ic/message/user_status_message'
+require 'ic/message/async_operation_completed_message'
 
 module Ic
 end

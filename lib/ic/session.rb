@@ -3,6 +3,7 @@ require 'ic/helpers'
 require 'ic/http'
 require 'ic/exceptions'
 require 'ic/logger'
+require 'ic/message'
 require 'ic/user'
 require 'ic/license'
 
@@ -18,6 +19,15 @@ module Ic
     attr_reader :id, :application, :user, :client
 
     def initialize(options = {})
+      if options[:from]
+        config = {}
+        case options[:from]
+          when String             then File.open(options[:from]) { |file| config = JSON.parse(file.read) }
+          when File, StringIO, IO then  config = JSON.parse(options[:from].read)
+          else raise InvalidArgumentError, 'from'
+        end
+        options = config.keys2sym.merge(options)
+      end
       raise MissingArgumentError, 'user'     unless options[:user]
       raise MissingArgumentError, 'password' unless (@password = options[:password])
       self.logger   = options
@@ -188,6 +198,12 @@ module Ic
 
     def release_all_licenses
       http_delete path: "/icws/#{@id}/licenses"
+    end
+
+    def messages
+      results = http_get path: "/icws/#{@id}/messaging/messages"
+      raise ArgumentError, 'values' unless results[:values]
+      results[:values].collect { |item| Message.from_json(item)}
     end
 
     def to_s

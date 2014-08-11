@@ -93,3 +93,44 @@ describe 'Status' do
     end
   end
 end
+
+describe 'Status Subscription' do
+  before do
+    @config = load_config('spec/login.json')
+    @config[:log_level] = Logger::DEBUG
+  end
+
+  specify 'should be notified when status changes' do
+    @config[:log_to] = "tmp/test-User-StatusSubscription-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+    session = Ic::Session.connect(@config)
+    expect(session).to be_truthy
+    expect(session.connected?).to be true
+    begin
+      current_status = session.user.status
+      expect(current_status).to be_truthy
+      expect(current_status.id).to be_instance_of String
+
+      status_updated = false
+      subscription = Ic::Status.subscribe(session: session, user: session.user) do |notice|
+        status_updated = true
+      end
+      session.user.status = 'Do Not disturb'
+      #expect(thread.join(1)).not_to be nil
+      sleep 1
+      # We should wait on something for up to 1 second (like thread.join)
+      expect(status_updated).to be true
+      new_status = session.user.status
+      expect(new_status).to be_truthy
+      expect(new_status.id).to eq 'Do Not disturb'
+      subscription.unsubscribe
+
+      session.user.status = current_status
+      new_status = session.user.status
+      expect(new_status).to be_truthy
+      expect(new_status.id).to eq current_status.id
+    ensure
+      session.disconnect
+      expect(session.connected?).to be false
+    end
+  end
+end

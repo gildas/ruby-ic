@@ -10,3 +10,14 @@ class Hash
     keys2sym[self]
   end
 end
+
+class Array
+  def keys2sym
+    self.collect do |item|
+      case item
+        when Hash, Aray then item.keys2sym
+        else item
+    end
+    end
+  end
+end

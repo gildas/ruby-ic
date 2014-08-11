@@ -85,14 +85,18 @@ module Ic
         elsif response.ok?
           data = {}
           if response.content.size > 0
-            data.merge! JSON.parse(response.content).keys2sym
+            data[:content_type] = response.header['Content-Type'].first
+            content = JSON.parse(response.content)
+            case content
+              when Hash then data.merge! content.keys2sym
+              when Array then data[:values] = content.keys2sym
+              else raise InvalidArgumentError, 'content'
+            end
             @token = data[:csrfToken] if data[:csrfToken]
-            data[:location] = response.header['Location'].first if response.header['Location'] && !response.header['Location'].empty?
-            trace.debug('HTTP') { "Token?: #{data[:csrfToken]}"}
+            trace.debug('HTTP') { "Token?: #{data[:csrfToken]}, Content: #{response.content.size} Bytes of type #{data[:content_type]}"}
           end
-          data[:content_type] = response.header['Content-Type'].first
           data[:location] = response.header['Location'].first if response.header['Location'] && !response.header['Location'].empty?
-          trace.debug('HTTP') { "Content Type: #{data[:content_type]}, location?: #{data[:location]}"}
+          trace.debug('HTTP') { "location?: #{data[:location]}"}
           return data
         else
           trace.error('HTTP') { "HTTP Failure: #{response.status} #{response.reason}" }

@@ -9,7 +9,7 @@ module Ic
     include Traceable
 
     attr_reader :id, :message, :group_tag, :icon_uri, :system_id, :changed_at, :on_phone_at, :notes
-    attr_reader :forward_to, :until, :stations, :servers
+    attr_reader :forward_to, :until, :stations, :servers, :user_id
 
     def self.find_all(session, options = {})
       session.trace.debug('Status') { "Requesting list of statuses, options=#{options}" }
@@ -34,9 +34,7 @@ module Ic
     end
 
     def initialize(options = {})
-      options[:log_to] = options[:session].logger unless options[:log_to]
       self.logger      = options
-      @session         = options[:session]
       @can_have_date   = options.include?(:canHaveDate) ? options[:canHaveDate] : false
       @can_have_time   = options.include?(:canHaveTime) ? options[:canHaveTime] : false
       @group_tag       = options[:groupTag]
@@ -60,8 +58,8 @@ module Ic
       @until           = DateTime.parse(options[:until]) if options.include?(:until)
       @stations        = options[:stations] || []
       @servers         = options[:icServers] || []
+      @user_id         = options[:user_id] || options[:userId]
     end
-
 
     def can_have_date? ; @can_have_date end
 
@@ -82,6 +80,19 @@ module Ic
     def logged_in? ; @logged_in end
 
     def on_phone? ; @on_phone end
+
+    def self.subscribe(options = {}, &block)
+      raise MissingArgumentError, 'session' unless (session = options[:session])
+      data = {}
+      if options[:user]
+        data[:userIds] = [ options[:user].respond_to?(:id) ? options[:user].id : options[:user] ]
+      elsif options[:users]
+        data[:userIds] = optons[:users].collect { |user| user.respond_to?(:id) ? user.id : :user }
+      else
+        raise MissingArgumentError, 'user or users'
+      end
+      session.http_put path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses", data: data
+    end
 
     def to_s
       message
