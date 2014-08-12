@@ -37,6 +37,10 @@ module Ic
       formatter.remove_context(context)
     end
 
+    def banner(title)
+      ['=' * 10, title, '=' * (120 - title.size)].join(' ')
+    end
+
     private
     def self.targets(options={})
       return [] if ! options[:log_to]

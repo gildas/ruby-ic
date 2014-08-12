@@ -87,6 +87,7 @@ module Ic
 
     class Observer
       def initialize(options = {}, &block)
+        #TODO: We should also support Status properties to limit
         raise MissingArgumentError, 'session' unless (@session = options[:session])
         @user_ids = []
         if options[:user]
@@ -120,6 +121,7 @@ module Ic
       end
 
       def update(message)
+        #TODO: Not sure where but we should support "delta?"
         @block.call(message) if @block
       end
     end
