@@ -23,5 +23,9 @@ module Ic
       raise InvalidTypeError,     options[:__type] unless options[:__type] == self.urn_type
       self.new(options)
     end
+
+    def to_s
+      "#{@statuses.size} Status Message#{@statuses.size > 1 ? 's' : ''}"
+    end
   end
 end

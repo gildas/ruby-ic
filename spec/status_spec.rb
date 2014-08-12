@@ -111,26 +111,26 @@ describe 'Status Subscription' do
       expect(current_status.id).to be_instance_of String
 
       status_updated = false
-      thread = Ic::Status.subscribe(session: session, user: session.user, check_every: 1) do |messages|
-        messages.each do |message|
-          case message
-            when Ic::AsyncOperationCompletedMessage
-              session.info('session') { "Async Operation Completed. Request Id: #{message.request_id}"}
-            when Ic::UserStatusMessage
-              session.info('session') { "Status message for #{message.user_id}: #{message.statuses.first.id}"}
-              status_updated = true if message.statuses.first.id == 'Do Not disturb'
-              return true
+      status_observer = Ic::Status::Observer.start(session: session, user: session.user) do |message|
+        session.trace.info('observer') { "Status message #{message}"}
+        message.statuses.each do |status|
+          session.trace.info('observer') { "Status for #{status.user_id}: #{status}"}
+          next unless status.user_id == session.user.id
+          if status.id == 'Do Not disturb'
+            session.trace.debug('observer') { 'Found the expected status'}
+            status_updated = true
+            break
           end
         end
-        false
       end
       session.user.status = 'Do Not disturb'
-      sleep 10
+      session.trace.info('session') { 'Waiting for the change to be seen by the observer'}
+      sleep 5
       expect(status_updated).to be true
       new_status = session.user.status
       expect(new_status).to be_truthy
       expect(new_status.id).to eq 'Do Not disturb'
-      subscription.unsubscribe
+      status_observer.stop
 
       session.user.status = current_status
       new_status = session.user.status

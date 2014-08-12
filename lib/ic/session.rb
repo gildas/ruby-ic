@@ -1,4 +1,5 @@
 require 'json'
+require 'observer'
 require 'ic/helpers'
 require 'ic/http'
 require 'ic/exceptions'
@@ -9,6 +10,7 @@ require 'ic/license'
 
 module Ic
   class Session
+    include Observable
     include Traceable
     include HTTP::Requestor
 
@@ -30,12 +32,15 @@ module Ic
       end
       raise MissingArgumentError, 'user'     unless options[:user]
       raise MissingArgumentError, 'password' unless (@password = options[:password])
-      self.logger   = options
-      @application  = options[:application] || 'icws client'
-      self.client   = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
-      @id           = nil
-      @location     = BASE_LOCATION
-      @user         = User.new(session: self, id: options[:user])
+      self.logger             = options
+      @application            = options[:application] || 'icws client'
+      self.client             = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
+      @id                     = nil
+      @location               = BASE_LOCATION
+      @user                   = User.new(session: self, id: options[:user])
+      @message_poll_frequency = options[:poll_frequency] || 1
+      @message_thread         = nil
+      @message_poll_active    = false
     end
 
     def self.connect(options = {})
@@ -62,6 +67,7 @@ module Ic
           @user.display ||= session_info[:userDisplayName]
           logger.add_context(session: @id)
           trace.info('Session') { "Successfully Connected to Session #{@id}, located at: #{@location}" }
+          poll_messages
           return self
         rescue HTTP::WantRedirection => e
           trace.warn('Session') { 'We need to check other servers' }
@@ -75,6 +81,9 @@ module Ic
 
     def disconnect
       return self unless connected?
+      trace.info('messages') { "Stopping Message polling" }
+      @message_poll_active = false
+      @message_thread.join
       trace.debug('Session') { "Disconnecting from #{client.server}" }
       http_delete path: location, session: self
       trace.info('Session') { "Successfully disconnected from #{client.server}" }
@@ -200,14 +209,33 @@ module Ic
       http_delete path: "/icws/#{@id}/licenses"
     end
 
-    def messages
-      results = http_get path: "/icws/#{@id}/messaging/messages"
-      raise ArgumentError, 'values' unless results[:values]
-      results[:values].collect { |item| Message.from_json(item)}
-    end
-
     def to_s
       connected? ? id : ''
+    end
+
+    private
+
+    def poll_messages
+      @message_poll_active = true
+      @message_thread = Thread.new do
+        begin
+          if count_observers > 0
+            trace.debug('messages') {'Polling server for messages'}
+            results = http_get path: "/icws/#{@id}/messaging/messages"
+            raise ArgumentError, 'values' unless results[:values]
+            unless results[:values].empty?
+              changed
+              results[:values].each do |value|
+                message = Message.from_json(value)
+                trace.debug('messages') { "Received message: #{message}"}
+                notify_observers(message)
+              end
+            end
+          end
+          sleep(@message_poll_frequency)
+        end while @message_poll_active
+        trace.info('messages') {'Stopped polling server for messages'}
+      end
     end
   end
 end
