@@ -16,11 +16,13 @@ optparse = OptionParser.new do|opts|
 
   # Define the options, and what they do
   options[:verbose] = false
-  opts.on( '-v', '--verbose', 'Output more information' )          { options[:log_level] = Logger::DEBUG }
-  opts.on( '-l', '--logfile FILE', 'Write log to FILE' )           { |file| options[:log_to] = file }
-  opts.on('-s', '--server SERVER', 'Connect to the CIC SERVER')    { |server| options[:server] = server }
-  opts.on('-u', '--user USER', 'User to connect with')             { |user| options[:user] = user }
-  opts.on('-p', '--password [PASSWORD]', 'Password to connect with') { |password| options[:password] = password }
+  options[:tail]    = false
+  opts.on( '-v', '--verbose', 'Output more information' )               { options[:log_level] = Logger::DEBUG }
+  opts.on( '-l', '--logfile FILE', 'Write log to FILE' )                { |file| options[:log_to] = file }
+  opts.on('-s', '--server SERVER', 'Connect to the CIC SERVER')         { |server| options[:server] = server }
+  opts.on('-u', '--user USER', 'User to connect with')                  { |user| options[:user] = user }
+  opts.on('-p', '--password [PASSWORD]', 'Password to connect with')    { |password| options[:password] = password }
+  opts.on( '-t', '--tail', 'subscribe to status changes (^C to stop)' ) { options[:tail] = true }
 
   # This displays the help screen, all programs are
   # assumed to have this option.
@@ -40,3 +42,15 @@ if !ARGV.empty?
 end
 current_status = session.user.status
 puts "Your status is: #{current_status}, id=#{current_status.id}, message=#{current_status.message}, last change=#{current_status.changed_at}"
+
+if options[:tail]
+  stop = false
+  trap('INT') { stop = true }
+  observer = Ic::Status::Observer.start(session: session, user: session.user) do |message|
+    message.statuses.each do |status|
+      next unless status.user_id == session.user.id
+      puts "Your status is: #{status}, id=#{status.id}, message=#{status.message}, last change=#{status.changed_at}"
+    end
+  end
+  loop until stop
+end
