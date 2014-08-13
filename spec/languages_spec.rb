@@ -1,24 +1,26 @@
 require 'rspec'
+require 'spec_helper'
 
-describe 'Language' do
-  before do
-    @config = load_config('spec/login.json')
-    @config[:log_level] = Logger::DEBUG
+describe Ic::Language do
+  before(:context) do
+    @logger  = Ic::Logger.create(log_to: "tmp/test-#{described_class}.log", log_mode: 'w', log_level: Logger::DEBUG)
+    @logger.info('Group') { @logger.banner(described_class.to_s) }
+    @session = Ic::Session.connect(from: 'spec/login.json', log_to: @logger)
+    expect(@session).to be_truthy
+    expect(@session.connected?).to be true
   end
 
-  specify 'should get a list of supported languages' do
-    @config[:log_to] = "tmp/test-Languages-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
-    session = Ic::Session.connect(@config)
-    expect(session).to be_truthy
-    expect(session.connected?).to be true
-    begin
-      languages = Ic::Language.find_all(session)
-      expect(languages).to be_truthy
-      expect(languages.empty?).to be false
-#      expect(languages.find_index {|language| language.id == 'en-us'}).to be > -1
-    ensure
-      session.disconnect
-      expect(session.connected?).to be false
+  after(:context) do
+    @session.disconnect
+    expect(@session.connected?).to be false
+    @logger.close
+  end
+
+  context 'logger' do
+    specify 'should get a list of supported languages' do |example|
+      @logger.info('Example') { @logger.banner(example.description) }
+      languages = Ic::Language.find_all(@session)
+      expect(languages.find {|language| language.id == 'en-US'}).to be_truthy
     end
   end
 end

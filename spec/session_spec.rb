@@ -1,7 +1,7 @@
 require 'rspec'
 require 'spec_helper'
 
-describe 'Session' do
+describe Ic::Session do
   before do
     @config = load_config('spec/login.json')
     @config[:log_level] = Logger::DEBUG
@@ -19,7 +19,7 @@ describe 'Session' do
 
   context 'valid server and credentials' do
     specify 'should connect and disconnect' do
-      @config[:log_to] = "tmp/test-Session-Connect-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Connect.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
@@ -30,7 +30,7 @@ describe 'Session' do
 
   context 'Server Information' do
     specify 'should get a version from the CIC server' do
-      @config[:log_to] = "tmp/test-Session-Version-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Version.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       version = session.version
@@ -38,7 +38,7 @@ describe 'Session' do
     end
 
     specify 'should get a feature list from the CIC server' do
-      @config[:log_to] = "tmp/test-Session-Features-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Features.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       features = session.features
@@ -47,14 +47,14 @@ describe 'Session' do
     end
 
     specify 'should contain the feature "connection"' do
-      @config[:log_to] = "tmp/test-Session-Feature?-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Feature?.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       expect(session.feature?('connection')).to be true
     end
 
     specify 'the feature "connection" should at least be version 1' do
-      @config[:log_to] = "tmp/test-Session-Feature-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Feature.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       feature = session.feature('connection')
@@ -62,7 +62,7 @@ describe 'Session' do
     end
 
     specify 'should not contain the feature "acme"' do
-      @config[:log_to] = "tmp/test-Session-!Feature?-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-!Feature?.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
       expect(session.feature?('acme')).to be false
@@ -71,7 +71,7 @@ describe 'Session' do
 
   context 'Station Connection' do
     specify 'should not exist by default' do
-      @config[:log_to] = "tmp/test-Session-Station-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Station.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
@@ -81,7 +81,7 @@ describe 'Session' do
     end
 
     specify 'should allow workstation' do
-      @config[:log_to] = "tmp/test-Session-Workstation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Workstation.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
@@ -97,7 +97,7 @@ describe 'Session' do
     end
 
     specify 'should allow workstation with media types' do
-      @config[:log_to] = "tmp/test-Session-Workstation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Workstation.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
@@ -113,7 +113,7 @@ describe 'Session' do
     end
 
     specify 'should allow remote station' do
-      @config[:log_to] = "tmp/test-Session-RemoteStation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-RemoteStation.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
@@ -129,7 +129,7 @@ describe 'Session' do
     end
 
     specify 'should allow remote number' do
-      @config[:log_to] = "tmp/test-Session-RemoteNumber-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-RemoteNumber.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
@@ -145,7 +145,7 @@ describe 'Session' do
     end
 
     specify 'should be able to disconnect from all stations' do
-      @config[:log_to] = "tmp/test-Session-NoStation-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-NoStation.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
@@ -165,7 +165,7 @@ describe 'Session' do
 
   context 'Unique Authentication Token' do
     specify 'should be obtainable' do
-      @config[:log_to] = "tmp/test-Session-Token-#{Time.now.strftime('%Y%m%d%H%M%S%L')}.log"
+      @config[:log_to] = "tmp/test-#{described_class}-Token.log"
       session = Ic::Session.connect(@config)
       expect(session).to be_truthy
       expect(session.connected?).to be true
