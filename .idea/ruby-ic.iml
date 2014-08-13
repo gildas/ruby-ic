@@ -58,6 +58,7 @@
     <orderEntry type="library" scope="PROVIDED" name="rspec-expectations (v3.0.3, rbenv: 2.1.2) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rspec-mocks (v3.0.3, rbenv: 2.1.2) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rspec-support (v3.0.3, rbenv: 2.1.2) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="yard (v0.8.7.4, rbenv: 2.1.2) [gem]" level="application" />
   </component>
 </module>
 
