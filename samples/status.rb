@@ -46,8 +46,8 @@ puts "Your status is: #{current_status}, id=#{current_status.id}, message=#{curr
 if options[:tail]
   stop = false
   trap('INT') { stop = true }
-  observer = Ic::Status::Observer.start(session: session, user: session.user) do |message|
-    message.statuses.each do |status|
+  observer = Ic::Status::Observer.start(session: session, user: session.user) do |statuses|
+    statuses.each do |status|
       next unless status.user_id == session.user.id
       puts "Your status is: #{status}, id=#{status.id}, message=#{status.message}, last change=#{status.changed_at}"
     end

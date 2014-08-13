@@ -122,7 +122,11 @@ module Ic
 
       def update(message)
         #TODO: Not sure where but we should support "delta?"
-        @block.call(message) if @block
+        if message.urn_type == UserStatusMessage.urn_type
+          @block.call(message.statuses, message.delta?) if @block
+        else
+          @session.trace.warn('Observer') { "UserStatusMessage observer: Unsupported message type: #{message.urn_type}"}
+        end
       end
     end
   end

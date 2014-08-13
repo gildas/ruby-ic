@@ -17,9 +17,9 @@ describe Ic::Status::Observer do
     begin
       mutex = Mutex.new
       status_updated = ConditionVariable.new
-      status_observer = Ic::Status::Observer.start(session: @session, user: @session.user) do |message|
-        @logger.info('observer') { "Status message #{message}"}
-        message.statuses.each do |status|
+      status_observer = Ic::Status::Observer.start(session: @session, user: @session.user) do |statuses|
+        @logger.info('observer') { "Got #{statuses.size} status(es)"}
+        statuses.each do |status|
           @logger.info('observer') { "Status for #{status.user_id}: #{status}"}
           next unless status.user_id == @session.user.id
           if status.id == 'Do Not disturb'
