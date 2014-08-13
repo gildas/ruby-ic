@@ -210,12 +210,9 @@ module Ic
       http_delete path: "/icws/#{@id}/licenses"
     end
 
-    def observe(message_class, options={}, &block)
-      observer = Ic::Observer.new(self, message_class)
-      observer.start(options, &block)
-      observer
+    def subscribe(message_class, options={}, &block)
+      Observer.new(self, message_class).start(options, &block)
     end
-    alias_method :subscribe, :observe
 
     def to_s
       connected? ? id : ''
