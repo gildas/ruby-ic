@@ -17,5 +17,9 @@ module Ic
       @name      = options[:language][:displayName]
       @countries = options[:countries].collect {|country_info| Country.new(country_info)} if options[:countries] && !options[:countries].empty?
     end
+
+    def to_s
+      "#{@id} (#{@name})"
+    end
   end
 end
