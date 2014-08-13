@@ -84,50 +84,5 @@ module Ic
     def to_s
       message || id
     end
-
-    class Observer
-      def initialize(options = {}, &block)
-        #TODO: We should also support Status properties to limit
-        raise MissingArgumentError, 'session' unless (@session = options[:session])
-        @user_ids = []
-        if options[:user]
-          @user_ids = [ options[:user].respond_to?(:id) ? options[:user].id : options[:user] ]
-        elsif options[:users]
-          @user_ids = options[:users].collect { |user| user.respond_to?(:id) ? user.id : :user }
-        else
-          raise MissingArgumentError, 'user or users'
-        end
-        @block = block
-      end
-
-      def self.start(options = {}, &block)
-        observer = Observer.new(options, &block)
-        observer.start
-        observer
-      end
-
-      def start
-        data = {
-            userIds: @user_ids
-        }
-        @session.http_put path: "/icws/#{@session.id}/messaging/subscriptions/status/user-statuses", data: data
-        @session.add_observer(self)
-      end
-
-      def stop
-        @session.delete_observer(self)
-        @session.http_delete path: "/icws/#{@session.id}/messaging/subscriptions/status/user-statuses"
-        #TODO: shouldn't we use a put with a data with current user_ids minus the one we want to stop observe?
-      end
-
-      def update(message)
-        #TODO: Not sure where but we should support "delta?"
-        if message.urn_type == UserStatusMessage.urn_type
-          @block.call(message.statuses, message.delta?) if @block
-        else
-          @session.trace.warn('Observer') { "UserStatusMessage observer: Unsupported message type: #{message.urn_type}"}
-        end
-      end
-    end
   end
 end

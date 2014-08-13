@@ -24,6 +24,24 @@ module Ic
       self.new(options)
     end
 
+    def self.subscribe(session, options = {})
+      raise MissingArgumentError, 'users' unless options.include?(:user) || options.include?(:users)
+      data = {
+          userIds: []
+      }
+      if options[:user]
+        data[:userIds] << (options[:user].respond_to?(:id) ? options[:user].id : options[:user])
+      elsif options[:users]
+        data[:userIds] = options[:users].collect { |user| user.respond_to?(:id) ? user.id : :user }
+      end
+      session.http_put path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses", data: data
+    end
+
+    def self.unsubscribe(session)
+      session.http_delete path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses"
+      #TODO: shouldn't we use a put with a data with current user_ids minus the one we want to stop observe?
+    end
+
     def to_s
       "#{@statuses.size} Status Message#{@statuses.size > 1 ? 's' : ''}"
     end

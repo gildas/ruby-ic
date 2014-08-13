@@ -5,6 +5,7 @@ require 'ic/http'
 require 'ic/exceptions'
 require 'ic/logger'
 require 'ic/message'
+require 'ic/observer'
 require 'ic/user'
 require 'ic/license'
 
@@ -208,6 +209,13 @@ module Ic
     def release_all_licenses
       http_delete path: "/icws/#{@id}/licenses"
     end
+
+    def observe(message_class, options={}, &block)
+      observer = Ic::Observer.new(self, message_class)
+      observer.start(options, &block)
+      observer
+    end
+    alias_method :subscribe, :observe
 
     def to_s
       connected? ? id : ''

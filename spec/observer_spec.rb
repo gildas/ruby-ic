@@ -1,6 +1,6 @@
 require 'rspec'
 
-describe Ic::Status::Observer do
+describe Ic::Observer do
   before do
     @logger  = Ic::Logger.create(log_to: "tmp/test-#{described_class}.log", log_level: Logger::DEBUG)
     @logger.info('Group') { @logger.banner(described_class.to_s) }
@@ -17,7 +17,7 @@ describe Ic::Status::Observer do
     begin
       mutex = Mutex.new
       status_updated = ConditionVariable.new
-      status_observer = Ic::Status::Observer.start(session: @session, user: @session.user) do |statuses|
+      status_observer = @session.observe(Ic::UserStatusMessage, user: @session.user) do |statuses|
         @logger.info('observer') { "Got #{statuses.size} status(es)"}
         statuses.each do |status|
           @logger.info('observer') { "Status for #{status.user_id}: #{status}"}

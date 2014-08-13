@@ -43,7 +43,7 @@ module Ic
 
     private
     def self.targets(options={})
-      return [] if ! options[:log_to]
+      return [] unless options[:log_to]
       case options[:log_to]
         when Logger             then [ options[:log_to] ]
         when Array              then options[:log_to].map {|target| targets(log_to: target)}.flatten
