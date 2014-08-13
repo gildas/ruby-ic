@@ -13,19 +13,18 @@ module Ic
   end
 
   class Logger < ::Logger
+    DEFAULT_SHIFT_AGE  = 0
+    DEFAULT_SHIFT_SIZE = 1048576
+
     def self.create(options={})
-      targets = targets(options)
-      if targets.empty?
-        logger = NullLogger.new()
-      elsif targets.size == 1
-        return targets.first if targets.first.kind_of?(Logger)
-        logger = Logger.new(targets.first)
-      else
-        logger = Logger.new(MultiIO.new(targets))
-      end
+      return Logger.new(NullIO.new) unless options[:log_to]
+      return options[:log_to] if options[:log_to].kind_of? Logger
+      devices = self.devices(options)
+      devices = MultiIO.new(devices) if devices.kind_of? Array
+      logger  = Logger.new(devices, options[:shift_age] || DEFAULT_SHIFT_AGE, options[:shift_size] || DEFAULT_SHIFT_SIZE)
       logger.progname  = options[:log_progname]  || 'Ic'
-      logger.level     = options[:log_level] || Logger::WARN
-      logger.formatter = Ic::Formatter.new
+      logger.level     = options[:log_level]     || Logger::WARN
+      logger.formatter = options[:log_formatter] || Formatter.new
       logger
     end
 
@@ -42,14 +41,12 @@ module Ic
     end
 
     private
-    def self.targets(options={})
-      return [] unless options[:log_to]
+    def self.devices(options={})
       case options[:log_to]
-        when Logger             then [ options[:log_to] ]
-        when Array              then options[:log_to].map {|target| targets(log_to: target)}.flatten
-        when String             then [ File.open(options[:log_to], 'a') ]
-        when File, StringIO, IO then [ options[:log_to] ]
-        else []
+        when Array              then options[:log_to].map {|target| self.devices(log_to: target)}.flatten
+        when String             then File.open(options[:log_to], 'a')
+        when File, StringIO, IO then options[:log_to]
+        else raise InvalidArgumentError, "#{options[:log_to]}"
       end
     end
   end
@@ -75,11 +72,9 @@ module Ic
     end
   end
 
-  class NullLogger < ::Logger
-    def initialize(*args)            ; end
-    def add(*args, &block)           ; end
-    def add_context(context = {})    ; end
-    def remove_context(context = {}) ; end
+  class NullIO
+    def write(*args) ; end
+    def close        ; end
   end
 
   class MultiIO
