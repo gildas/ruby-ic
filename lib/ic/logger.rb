@@ -44,7 +44,7 @@ module Ic
     def self.devices(options={})
       case options[:log_to]
         when Array              then options[:log_to].map {|target| self.devices(log_to: target)}.flatten
-        when String             then File.open(options[:log_to], 'a')
+        when String             then File.open(options[:log_to], options[:log_mode] || 'a')
         when File, StringIO, IO then options[:log_to]
         else raise InvalidArgumentError, "#{options[:log_to]}"
       end
