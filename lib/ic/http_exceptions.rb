@@ -4,6 +4,8 @@ module Ic
 
     class WantRedirection < HTTPError ; end
 
+    class UnavailableService < HTTPError ; end
+
     class BadRequestError < HTTPError ; end
 
     class NotFoundError < HTTPError ; end

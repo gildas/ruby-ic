@@ -36,16 +36,16 @@ module Ic
       logger  = Logger.new(devices, options[:shift_age] || DEFAULT_SHIFT_AGE, options[:shift_size] || DEFAULT_SHIFT_SIZE)
       logger.progname  = options[:log_progname]  || 'Ic'
       logger.level     = options[:log_level]     || Logger::WARN
-      logger.formatter = options[:log_formatter] || Formatter.new
+      logger.formatter = options[:log_formatter] || Ic::Formatter.new
       logger
     end
 
     def add_context(context = {})
-      formatter.add_context(context)
+      formatter.add_context(context) if formatter.respond_to? :add_context
     end
 
     def remove_context(context = {})
-      formatter.remove_context(context)
+      formatter.remove_context(context) if formatter.respond_to? :remove_context
     end
 
     # Builds a banner with the given text

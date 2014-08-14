@@ -78,10 +78,13 @@ module Ic
         trace.debug('HTTP') {'HTTP traffic >>>>>'}
         trace.debug('HTTP') { "Response: #{response.status} #{response.reason}" }
         if response.redirect? || HTTP::Status::SERVICE_UNAVAILABLE == response.status
+          # The response was:
+          # {"alternateHostList":["otherserver"],"errorId":"error.server.notAcceptingConnections","message":"This Session Manager is not currently accepting connections."}
           trace.warn('HTTP') { 'Host wants us to redirect' }
-          targets = JSON.parse(response.content).keys2sym
-          raise KeyError, 'alternateHostList' unless targets[:alternateHostList]
-          raise HTTP::WantRedirection, targets[:alternateHostList]
+          data = JSON.parse(response.content).keys2sym
+          raise HTTP::UnavailableService, data.to_json unless data[:errorId] = 'error.server.notAcceptingConnections'
+          raise KeyError, 'alternateHostList'          unless data[:alternateHostList]
+          raise HTTP::WantRedirection, data.to_json
         elsif response.ok?
           data = {}
           if response.content.size > 0
