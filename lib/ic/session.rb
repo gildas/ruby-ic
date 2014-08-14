@@ -72,8 +72,9 @@ module Ic
           return self
         rescue HTTP::WantRedirection => e
           trace.warn('Session') { 'We need to check other servers' }
-          trace.info('Session') { "alternate servers: #{JSON.pretty_generate(e.message)}" }
-          server = e.message.first
+          servers = JSON.parse(e.message).keys2sym[:alternateHostList]
+          trace.info('Session') { "alternate servers: [#{servers.join(', ')}]" }
+          server = servers.first
           raise TooManyRedirectionsError if alternate_server_index >= MAX_REDIRECTIONS
           alternate_server_index += 1
         end
