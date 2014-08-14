@@ -5,6 +5,8 @@ module Ic
   module Traceable
     attr_reader :logger
 
+    #
+    # @param options
     def logger=(options = {})
       @logger = Ic::Logger.create(options)
     end
@@ -12,10 +14,20 @@ module Ic
     alias_method :trace, :logger
   end
 
+  # The Logger class used by the classes of the Ic library
   class Logger < ::Logger
     DEFAULT_SHIFT_AGE  = 0
     DEFAULT_SHIFT_SIZE = 1048576
 
+    # Creates a new Logger object
+    #
+    #   @param log_to [Logger, String, File, StringIO, IO, Array] the devices to send log messages to.
+    #   @param log_level [Enum] the level of logging
+    #   @param log_progname [String]
+    #   @param shift_age [Integer, String]
+    #   @param shift_size [Integer]
+    #   @param log_formatter [Formatter]
+    #   @return [Logger]
     def self.create(options={})
       return Logger.new(NullIO.new) unless options[:log_to]
       return options[:log_to] if options[:log_to].kind_of? Logger
@@ -36,8 +48,12 @@ module Ic
       formatter.remove_context(context)
     end
 
-    def banner(title)
-      ['=' * 10, title, '=' * (120 - title.size)].join(' ')
+    # Builds a banner with the given text
+    # @param title            [String] the text to place in the banner
+    # @param banner_character [String] the character to fill the banner
+    # @param length           [Fixnum] the total length of the banner
+    def banner(title, banner_character: '=', length: 120)
+      [banner_character * 10, title, banner_character * (length - 13 - title.size)].join(' ')
     end
 
     private
