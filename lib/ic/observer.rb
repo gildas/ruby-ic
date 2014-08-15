@@ -8,7 +8,7 @@ module Ic
     def initialize(session, message_class)
       @session       = session
       @message_class = message_class
-      self.logger    = { log_to: @session.logger }
+      self.logger    = @session.logger
     end
 
     def start(options = {}, &block)

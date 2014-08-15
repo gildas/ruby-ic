@@ -17,9 +17,9 @@ module Ic
       2
     end
 
-    def initialize(options = {})
-      super(options)
-      self.logger    = options
+    def initialize(**options)
+      super(**options)
+      self.create_logger(**options, default: @session)
       @remote_number = options[:remote_number] || options[:remoteNumber]
     end
 

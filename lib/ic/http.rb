@@ -22,7 +22,7 @@ module Ic
       attr_reader :server, :language
 
       def initialize(options = {})
-        self.logger = options
+        self.create_logger(options)
         @server     = options[:server]           || 'localhost'
         @scheme     = options[:scheme]           || 'https'
         @port       = options[:port]             || 8019

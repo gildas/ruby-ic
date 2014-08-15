@@ -9,7 +9,7 @@ module Ic
     attr_reader :id, :session, :location, :media_types
     attr_writer :session, :location
 
-    def initialize(options = {})
+    def initialize(**options)
       raise MissingArgumentError, 'id' unless (@id = options[:id])
       @media_types = MediaType.from_hash(options)
       @ready       = options.include?(:ready) ? options[:ready] : true

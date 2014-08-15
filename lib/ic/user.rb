@@ -12,10 +12,9 @@ module Ic
     attr_reader :id, :display
     attr_writer :display
 
-    def initialize(options = {})
-      options[:log_to] = options[:session].logger unless options[:log_to]
-      self.logger = options
+    def initialize(**options)
       @session    = options[:session]
+      self.create_logger(**options, default: @session)
       @id         = options[:id] || @session.user.id
       @display    = options[:display] || @id
       self.client = @session.client

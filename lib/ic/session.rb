@@ -10,6 +10,7 @@ require 'ic/user'
 require 'ic/license'
 
 module Ic
+  # Session objects are used to manage connections to a CIC Server
   class Session
     include Observable
     include Traceable
@@ -33,7 +34,7 @@ module Ic
       end
       raise MissingArgumentError, 'user'     unless options[:user]
       raise MissingArgumentError, 'password' unless (@password = options[:password])
-      self.logger             = options
+      self.create_logger(options)
       @application            = options[:application] || 'icws client'
       self.client             = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
       @id                     = nil

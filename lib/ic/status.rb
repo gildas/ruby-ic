@@ -34,7 +34,7 @@ module Ic
     end
 
     def initialize(options = {})
-      self.logger      = options
+      self.create_logger(options)
       @can_have_date   = options.include?(:canHaveDate) ? options[:canHaveDate] : false
       @can_have_time   = options.include?(:canHaveTime) ? options[:canHaveTime] : false
       @group_tag       = options[:groupTag]

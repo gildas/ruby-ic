@@ -15,9 +15,9 @@ module Ic
       1
     end
 
-    def initialize(options = {})
-      super(options)
-      self.logger = options
+    def initialize(**options)
+      super(**options)
+      self.create_logger(**options, default: @session)
       trace.debug('Workstation') { "Workstation: id=#{@id}, ready? #{ready?}" }
     end
 

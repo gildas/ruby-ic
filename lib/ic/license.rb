@@ -21,10 +21,9 @@ module Ic
       OTHER_APPLICATION            = 8
     end
 
-    def initialize(options = {})
+    def initialize(**options)
       raise MissingArgumentError, 'session' unless (@session = options[:session])
-      options[:log_to] = @session.logger unless options[:log_to]
-      self.logger      = options
+      self.create_logger(**options, default: @session)
       raise MissingArgumentError, 'id'     unless (@id     = options[:id] || options[:licenseName])
       raise MissingArgumentError, 'status' unless (@status = options[:status] || options[:licenseStatus])
       if options.include?(:available)

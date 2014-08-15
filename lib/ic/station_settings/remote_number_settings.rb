@@ -17,9 +17,9 @@ module Ic
       3
     end
 
-    def initialize(options = {})
-      super(options)
-      self.logger = options
+    def initialize(**options)
+      super(**options)
+      self.create_logger(**options, default: @session)
       @persistent = options[:persistent]
     end
 
