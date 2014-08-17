@@ -14,6 +14,7 @@ module Ic
     #
     # @param (see Ic::Logger#create)
     # @param default [#logger] gets the logger from another object
+    # @param options [Hash]    absorbs extra parameters we do not use
     # @return (see Ic::Logger#create)
     def create_logger(log_to: nil, log_mode: 'a', log_level: ::Logger::WARN, log_progname: 'ic', shift_age: 0, shift_size: 1048576, log_formatter: nil, default: nil, **options)
       if log_to.nil? && !default.nil? && default.respond_to?(:logger)
