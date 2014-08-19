@@ -10,34 +10,32 @@ end
 
 RSpec::Core::RakeTask.new
 
-desc "Links the configuration file to the current network"
-task :prep_config do
-  sources   = Dir.glob('spec/login-*.json')
-  if !sources.empty?
-    my_config = nil
-    addresses = []
-    addresses << ENV['network'] if ENV['network']
-    addresses += Socket.getifaddrs.map { |i| i.addr.ip_address if i.addr.ipv4? }.compact
-    raise ArgumentError, "Cannot find any network address to work with" if addresses.empty?
-    addresses.each do |local_ip|
-      sources.each do |filename|
-        config = { 'network' => '' }
-        File.open(filename) { |file| config = JSON.parse(file.read) }
-        if local_ip =~ /#{config['network']}/
-          file 'spec/login.json' => filename do
-            cp filename, 'spec/login.json', :verbose => true
-          end
-          desc 'matches login.json per network'
-          task :config_file => 'spec/login.json'
-          my_config = filename
-          puts "Testing over #{local_ip} with #{filename}"
-          break
+sources   = Dir.glob('spec/login-*.json')
+if !sources.empty?
+  File.delete('spec/login.json')
+  my_config = nil
+  addresses = []
+  addresses << ENV['network'] if ENV['network']
+  addresses += Socket.getifaddrs.map { |i| i.addr.ip_address if i.addr.ipv4? }.compact
+  raise ArgumentError, "Cannot find any network address to work with" if addresses.empty?
+  addresses.each do |local_ip|
+    sources.each do |filename|
+      config = { 'network' => '' }
+      File.open(filename) { |file| config = JSON.parse(file.read) }
+      if local_ip =~ /#{config['network']}/
+        file 'spec/login.json' => filename do
+          cp filename, 'spec/login.json', :verbose => true
         end
+        desc 'matches login.json per network'
+        task :config_file => 'spec/login.json'
+        my_config = filename
+        puts "Testing over #{local_ip} with #{filename}"
+        break
       end
     end
-    raise NotImplementedError, "Cannot find a configuration for any of my networks (#{addresses.join(', ')})" unless my_config
   end
+  raise NotImplementedError, "Cannot find a configuration for any of my networks (#{addresses.join(', ')})" unless my_config
 end
 
 desc "Runs the RSpec tests after linking the configuration"
-task :test => [:prep_config, :spec]
+task :test => [:config_file, :spec]
