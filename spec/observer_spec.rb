@@ -14,12 +14,14 @@ describe Ic::Observer do
   end
 
   after(:context) do
-    @session.user.status = @current_status
-    new_status = @session.user.status
-    expect(new_status).to be_truthy
-    expect(new_status.id).to eq @current_status.id
-    @session.disconnect
-    expect(@session.connected?).to be false
+    if (@session)
+      @session.user.status = @current_status
+      new_status = @session.user.status
+      expect(new_status).to be_truthy
+      expect(new_status.id).to eq @current_status.id
+      @session.disconnect
+      expect(@session.connected?).to be false
+    end
     @logger.close
   end
 

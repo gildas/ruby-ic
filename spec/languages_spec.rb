@@ -11,16 +11,16 @@ describe Ic::Language do
   end
 
   after(:context) do
-    @session.disconnect
-    expect(@session.connected?).to be false
+    if (@session)
+      @session.disconnect
+      expect(@session.connected?).to be false
+    end
     @logger.close
   end
 
-  context 'logger' do
-    specify 'should get a list of supported languages' do |example|
-      @logger.info('Example') { @logger.banner(example.description) }
-      languages = Ic::Language.find_all(@session)
-      expect(languages.find {|language| language.id == 'en-US'}).to be_truthy
-    end
+  specify 'should get a list of supported languages' do |example|
+    @logger.info('Example') { @logger.banner(example.description) }
+    languages = Ic::Language.find_all(@session)
+    expect(languages.find {|language| language.id == 'en-US'}).to be_truthy
   end
 end
