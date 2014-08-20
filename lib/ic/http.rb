@@ -133,7 +133,7 @@ module Ic
           # {"alternateHostList":["otherserver"],"errorId":"error.server.notAcceptingConnections","message":"This Session Manager is not currently accepting connections."}
           trace.warn('HTTP') { 'Host wants us to redirect' }
           data = JSON.parse(response.content).keys2sym
-          raise HTTP::UnavailableService, data.to_json unless data[:errorId] = 'error.server.notAcceptingConnections'
+          raise HTTP::UnavailableService, data.to_json unless data[:errorId] == 'error.server.notAcceptingConnections'
           raise KeyError, 'alternateHostList'          unless data[:alternateHostList]
           raise HTTP::WantRedirection, data.to_json
         elsif response.ok?
