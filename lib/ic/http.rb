@@ -5,63 +5,114 @@ require 'ic/http_statuses'
 require 'ic/logger'
 
 module Ic
+  # This module handles HTTP/HTTPS Client connections to a CIC Server via the ICWS API.
   module HTTP
+    # This interface allows classes to have a direct access to their client connection object.
     module Requestor
 
       attr_reader :client
       attr_writer :client
 
-      def http_get(options={})    ;  @client.request :get,    options end
-      def http_post(options={})   ;  @client.request :post,   options end
-      def http_delete(options={}) ;  @client.request :delete, options end
-      def http_put(options={})    ;  @client.request :put,    options end
+      def http_get(path: '/', data: nil, **options)    ;  @client.get(path: path, data: data, **options) end
+      def http_post(path: '/', data: nil, **options)   ;  @client.post(path: path, data: data, **options) end
+      def http_delete(path: '/', data: nil, **options) ;  @client.delete(path: path, data: data, **options) end
+      def http_put(path: '/', data: nil, **options)    ;  @client.put(path: path, data: data, **options) end
     end
 
+    # The HTTP/HTTPS Client Connection to a CIC Server
     class Client
       include Traceable
       attr_reader :server, :language
 
-      def initialize(options = {})
-        self.create_logger(options)
-        @server     = options[:server]           || 'localhost'
-        @scheme     = options[:scheme]           || 'https'
-        @port       = options[:port]             || 8019
-        @uri        = URI.parse("#{@scheme}://#{@server}:#{@port}")
-        @language   = options[:language]         || 'en-us'
+      # Initializes a new HTTP Client
+      #
+      # @param server   [String] the server host name or IP address
+      # @param scheme   [String] 'http' or 'https'
+      # @param port     [Fixnum] the port number
+      # @param language [String] the language for the connection 'lang-country', see below for codes
+      # @param proxy    [String] the proxy to use if any
+      # @param options  [Hash]   extra options for {Logger}
+      # @return         [Client] the client connection
+      # @see http://www.iso.org/iso/home/standards/language_codes.htm Language codes (ISO 639-1)
+      # @see http://www.iso.org/iso/country_codes.htm Country codes (ISO 3166)
+      def initialize(server: 'localhost', scheme: 'https', port: 8019, language: 'en-us', proxy: nil, **options)
+        self.create_logger(**options)
+        raise InvalidArgumentError, 'scheme' unless scheme == 'http' || scheme == 'https'
+        @server     = server
+        @scheme     = scheme
+        @port       = port
+        @language   = language
         @token      = nil
-        proxy       = ENV['HTTP_PROXY'] || options[:proxy]
-        @client     = HTTPClient.new(proxy)
+        @uri        = URI.parse("#{@scheme}://#{@server}:#{@port}")
+        @client     = HTTPClient.new(proxy || ENV['HTTP_PROXY'])
       end
 
+      # Assigns a new server to connect
       def server=(server)
         @server = server
         @uri    = URI.parse("#{@scheme}://#{@server}:#{@port}")
       end
 
-      def get(options = {})    ; request :get,    options end
-      def post(options = {})   ; request :post,   options end
-      def delete(options = {}) ; request :delete, options end
-      def put(options = {})    ; request :put,    options end
+      # Performs an HTTP GET request
+      #
+      # @param [String]   path    the URL to send the request to
+      # @param [#to_json] data    an object that can ben JSONified
+      # @param [Hash]     options optional arguments
+      # @option options [String] :server   to use another server for this request
+      # @option options [String] :language @see #initialize
+      # @option options [String] :token    token received on successful connection
+      # @return         [Hash] the data received from the server
+      def get(path: '/', data: nil, **options)
+        request(verb: :get,    path: path, data: data, **options)
+      end
 
-      def request(verb, options = {})
+      # Performs an HTTP POST request
+      # @param (see #get)
+      def post(path: '/', data: nil, **options)
+        request(verb: :post, path: path, data: data, **options)
+      end
+
+      # Performs an HTTP DELETE request
+      # @param (see #get)
+      def delete(path: '/', data: nil, **options)
+        request(verb: :delete, path: path, data: data, **options)
+      end
+
+      # Performs an HTTP PUT request
+      # @param (see #get)
+      def put(path: '/', data: nil, **options)
+        request(verb: :put, path: path, data: data, **options)
+      end
+
+      # Performs an HTTP request
+      #
+      # @param verb    [Symbol]   one of :get, :post, :delete, :put
+      # @param path    [String]   the URL to send the request to
+      # @param data    [#to_json] an object that can ben JSONified
+      # @param options [Hash]     optional arguments
+      # @option options [String] :server   to use another server for this request
+      # @option options [String] :language @see initialize
+      # @option options [String] :token    token received on successful connection
+      # @return        [Hash] the data received from the server
+      def request(verb: :get, path: '/', data: nil, **options)
         # cookies are managed automatically by the httpclient gem
-        raise MissingArgumentError, ':path' unless options[:path]
         self.server = options[:server] if options[:server]
-        url = "#{@uri}#{options[:path]}"
+        url = "#{@uri}#{path}"
         headers = {}
         headers['Accept-Language']      = options[:language] || @language
         headers['ININ-ICWS-CSRF-Token'] = options[:token]    || @token
-        @client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE # Only if turned on, we should verify by default
+        @client.ssl_config.verify_mode     = OpenSSL::SSL::VERIFY_NONE # Only if turned on, we should verify by default
         @client.ssl_config.verify_callback = @client.ssl_config.method(:sample_verify_callback)
         # TODO: Timeout
 
         body      = nil
         object_id = nil
-        if options[:data]
+        if data
+          raise InvalidArgumentError, 'data does not respond to to_json' unless data.respond_to? :to_json
           headers['Content-Type'] = 'application/json'
-          body = options[:data].to_json
-          object_id = options[:data].id      if options[:data].respond_to? :id
-          session   = options[:data].session if options[:data].respond_to?(:session) && options[:data].session
+          body = data.to_json
+          object_id = data.id      if data.respond_to? :id
+          session   = data.session if data.respond_to?(:session) && data.session
         end
         trace.info('HTTP')  { "Sending #{verb} request to #{url}" }
         trace.debug('HTTP') { "  SSL verify mode: #{@client.ssl_config.verify_mode}" }
@@ -126,7 +177,7 @@ module Ic
             when HTTP::Status::NOT_FOUND
               raise HTTP::NotFoundError, error.to_json
             when HTTP::Status::INTERNAL
-              raise RuntimeError if error[:errorCode] = -2147467259
+              raise RuntimeError if error[:errorCode] == -2147467259
               raise RuntimeError, error.to_json
             else
               raise HTTP::HTTPError, error.to_json
