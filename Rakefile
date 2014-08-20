@@ -10,6 +10,7 @@ end
 
 RSpec::Core::RakeTask.new
 
+desc "Assigns the proper config file depending on the current network"
 task :config_file do
   sources   = Dir.glob('spec/login-*.json')
   if !sources.empty?
