@@ -5,6 +5,7 @@
 *.o
 *.a
 mkmf.log
+tags
 /.config
 /coverage/
 /InstalledFiles
