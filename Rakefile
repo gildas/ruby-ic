@@ -10,6 +10,11 @@ end
 
 RSpec::Core::RakeTask.new
 
+desc "Builds the tags"
+task :ctags do
+  %x[ ctags --language-force=ruby -R -u --exclude=.yardoc --exclude=doc --exclude=.git --exclude=.idea --exclude=tmp]
+end
+
 desc "Assigns the proper config file depending on the current network"
 task :config_file do
   sources   = Dir.glob('spec/login-*.json')
