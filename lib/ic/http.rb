@@ -49,11 +49,11 @@ module Ic
     class Client
       include Traceable
 
-      # @!attribute [r] server
-      #  @return [String] The Server used to send requests
-      # @!attribute [r] language
-      #  @return [String] The requested language
-      attr_reader :server, :language
+      # @return [String] The Server to which requests are sent. Can be overriden with the keypair server: value in the options hash in {#request}.
+      attr_reader :server
+
+      # @return [String] The language that will be accepted in the response of the HTTP request
+      attr_reader :language
 
       # Initializes a new HTTP Client
       #
