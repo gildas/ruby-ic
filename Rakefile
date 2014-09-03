@@ -12,7 +12,7 @@ RSpec::Core::RakeTask.new
 
 desc "Builds the tags"
 task :ctags do
-  %x[ ctags --language-force=ruby -R -u --exclude=.yardoc --exclude=doc --exclude=.git --exclude=.idea --exclude=tmp]
+  %x[ git ls-files | ctags --tag-relative --sort=no  --exclude=.idea -L - -f ".git/tags" ]
 end
 
 desc "Assigns the proper config file depending on the current network"
