@@ -121,9 +121,9 @@ module Ic
       # @param path    [String]   the URL to send the request to
       # @param data    [#to_json] an object that can ben JSONified
       # @param options [Hash]     optional arguments
-      # @option options [String] :server   to use another server for this request
-      # @option options [String] :language @see initialize
-      # @option options [String] :token    token received on successful connection
+      # @option options [String] :server   (nil)     to use another server for this request
+      # @option options [String] :language ('en-us') @see initialize
+      # @option options [String] :token    (nil)     token received on successful connection
       # @return        [Hash] the data received from the server
       def request(verb: :get, path: '/', data: nil, **options)
         # cookies are managed automatically by the httpclient gem
