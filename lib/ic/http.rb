@@ -66,6 +66,7 @@ module Ic
       # @return         [Client] the client connection
       # @see http://www.iso.org/iso/home/standards/language_codes.htm Language codes (ISO 639-1)
       # @see http://www.iso.org/iso/country_codes.htm Country codes (ISO 3166)
+      # @raise [InvalidArgumentError] when the schme is none of 'http', 'https'.
       def initialize(server: 'localhost', scheme: 'https', port: 8019, language: 'en-us', proxy: nil, **options)
         self.create_logger(**options)
         raise InvalidArgumentError, 'scheme' unless scheme == 'http' || scheme == 'https'
@@ -125,6 +126,20 @@ module Ic
       # @option options [String] :language ('en-us') @see initialize
       # @option options [String] :token    (nil)     token received on successful connection
       # @return        [Hash] the data received from the server
+      # @raise [InvalidArgumentError] when data does not respond to #to_json or
+      #                               when the verb is not one of :get, :post, :delete, :put or
+      #                               when the returned data is an invalid content
+      # @raise [UnavailableService] when the server does not accept connections
+      # @raise [KeyError] when the server does not provide an alternate list of servers when redirecting
+      # @raise [WantRedirection] when the server wants the Client to change servers
+      # @raise [AuthenticationError] when the provided credentials do not authenticate with the server
+      # @raise [UnauthorizedError] when the provided credentials are not authorized on the server
+      # @raise [NotFoundError] when the requested resource does not exist on the server
+      # @raise [BadRequestError] when the request was badly formed
+      # @raise [SessionIdExpectedError] when the {Session} is not provided
+      # @raise [InvalidSessionIdError] when the provided {Session} was invalid
+      # @raise [AuthTokenExpectedError] when no token were provided
+      # @raise [RuntimeError] when the server experienced an unknown problem
       def request(verb: :get, path: '/', data: nil, **options)
         # cookies are managed automatically by the httpclient gem
         self.server = options[:server] if options[:server]
@@ -154,7 +169,7 @@ module Ic
           when :post   then response = @client.post(url, body, headers)
           when :delete then response = @client.delete(url, body, headers)
           when :put    then response = @client.put(url, body, headers)
-          else raise ArgumentError, 'verb'
+          else raise InvalidArgumentError, 'verb'
         end
         @client.debug_dev = nil if trace.debug?
         trace.debug('HTTP') {'HTTP traffic >>>>>'}
