@@ -20,7 +20,7 @@ describe Ic::Language do
 
   specify 'should get a list of supported languages' do |example|
     @logger.info('Example') { @logger.banner(example.description) }
-    languages = Ic::Language.find_all(@session)
+    languages = Ic::Language.find_all(session: @session)
     expect(languages.find {|language| language.id == 'en-US'}).to be_truthy
   end
 end
