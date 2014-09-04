@@ -1,7 +1,8 @@
-# Adding missing HTTP statuses
-# Extracted from lib/ruby/2.1.0/net/http/responses.rb
 module Ic
   module HTTP
+    # Various HTTP 1.1 Statuses that can be returned by servers.
+    #
+    # We expanded the default list from lib/ruby/2.1.0/net/http/responses.rb
     module Status
       OK                              = 200
       CREATED                         = 201
