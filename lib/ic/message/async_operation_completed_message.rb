@@ -7,7 +7,7 @@ module Ic
     include Message
 
     # The request identifier
-    # @return [Number]
+    # @return [Fixnum]
     attr_reader :request_id
 
     # The URN type that identifies this class in CIC.
@@ -17,7 +17,7 @@ module Ic
     end
 
     # Initializes a new {AsyncOperationCompletedMessage}.
-    # @param requestId [Number] The Request Identifier
+    # @param requestId [Fixnum] The Request Identifier
     # @param options   [Hash]   options used by parent classes
     # @raise [MissingArgumentError] when the requestId is missing
     def initialize(requestId: nil, **options)
