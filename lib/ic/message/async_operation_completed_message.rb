@@ -2,26 +2,40 @@ require 'json'
 require 'ic/message'
 
 module Ic
+  # This class implements Messages received from CIC that tell an asynchronous operation is completed.
   class AsyncOperationCompletedMessage
     include Message
 
+    # The request identifier
+    # @return [Number]
     attr_reader :request_id
 
+    # The URN type that identifies this class in CIC.
+    # @return [String] The URN type of the class
     def self.urn_type
       'urn:inin.com:messaging:asyncOperationCompletedMessage'
     end
 
-    def initialize(options = {})
-      super(options)
-      raise MissingArgumentError, 'requestId' unless options[:requestId]
-      @request_id = options[:requestId]
+    # Initializes a new {AsyncOperationCompletedMessage}.
+    # @param requestId [Number] The Request Identifier
+    # @param options   [Hash]   options used by parent classes
+    # @raise [MissingArgumentError] when the requestId is missing
+    def initialize(requestId: nil, **options)
+      raise MissingArgumentError, 'requestId' if requestId.nil?
+      super(**options)
+      @request_id = requestId
     end
 
-    def self.from_json(options = {})
-      # Safeguards...
-      raise MissingArgumentError, '__type'         unless options[:__type]
-      raise InvalidTypeError,     options[:__type] unless options[:__type] == self.urn_type
-      self.new(options)
+    # Creates an {AsyncOperationCompletedMessage} object from JSON data.
+    # This class method is called by {Message#from_json}
+    # @param json [Hash] The JSON representation
+    # @return [Message] The created {Message}
+    # @raise [MissingArgumentError] when the JSON data is missing some mandatory keys (__type)
+    # @raise [IncalidTypeError]     when The JSON data is of a different type than this class
+    def self.from_json(json)
+      raise MissingArgumentError, '__type'      unless json[:__type]
+      raise InvalidTypeError,     json[:__type] unless json[:__type] == self.urn_type
+      self.new(json)
     end
   end
 end

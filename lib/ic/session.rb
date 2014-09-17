@@ -212,8 +212,9 @@ module Ic
       http_delete path: "/icws/#{@id}/licenses"
     end
 
-    def subscribe(message_class, options={}, &block)
-      Observer.new(self, message_class).start(options, &block)
+    def subscribe(message_class: nil, **options, &block)
+      raise MissingArgumentError, 'message_class' if message_class.nil?
+      Observer.new(session: self, message_class: message_class).start(**options, &block)
     end
 
     def to_s

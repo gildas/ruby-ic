@@ -43,7 +43,7 @@ end
 current_status = session.user.status
 
 if options[:tail]
-  observer = session.subscribe(Ic::UserStatusMessage, user: session.user) do |statuses|
+  observer = session.subscribe(message_class: Ic::UserStatusMessage, user: session.user) do |statuses|
     statuses.each do |status|
       next unless status.user_id == session.user.id
       puts "Your status is: #{status}, id=#{status.id}, message=#{status.message}, last change=#{status.changed_at}"

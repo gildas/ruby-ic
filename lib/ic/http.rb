@@ -66,7 +66,7 @@ module Ic
       # @return         [Client] the client connection
       # @see http://www.iso.org/iso/home/standards/language_codes.htm Language codes (ISO 639-1)
       # @see http://www.iso.org/iso/country_codes.htm Country codes (ISO 3166)
-      # @raise [InvalidArgumentError] when the schme is none of 'http', 'https'.
+      # @raise [InvalidArgumentError] when the scheme is none of 'http', 'https'.
       def initialize(server: 'localhost', scheme: 'https', port: 8019, language: 'en-us', proxy: nil, **options)
         self.create_logger(**options)
         raise InvalidArgumentError, 'scheme' unless scheme == 'http' || scheme == 'https'
