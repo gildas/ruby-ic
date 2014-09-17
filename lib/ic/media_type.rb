@@ -1,4 +1,5 @@
 module Ic
+  # This module describes the various media types a {Session} can claim to process
   module MediaType
     NONE     = 0
     CALL     = 1
@@ -12,8 +13,11 @@ module Ic
     ALL      = [ CALL, CHAT, EMAIL, GENERIC, CALLBACK, SMS, WORKITEM ]
     DEFAULT  = CALL
 
-    def self.from_hash(options = {})
-      return [ DEFAULT ] unless options.include? :media_types
+    # Creates MediaType information from a Hash (typically from JSON)
+    # @param [Array, String, Fixnum] media_types (nil) contains media type(s)
+    # @return [Array<Fixnum>, Fixnum] The medika type(s) using constants
+    def self.from_hash(media_types: nil)
+      return [ DEFAULT ] if media_type.nil?
       options2types = lambda do |object|
         case object
           when Array  then object.collect {|item| options2types[item]}.flatten
@@ -25,6 +29,9 @@ module Ic
       options2types[options[:media_types]]
     end
 
+    # Creates a MediaType constant from its string representaion
+    # @param  [string] string The name of the MediaType
+    # @return [Fixnum] The MediaType identifier
     def self.from_string(string)
       return ALL     if string =~ /^(all)$/i
       return DEFAULT if string =~ /^(default)$/i
