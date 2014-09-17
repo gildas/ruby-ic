@@ -16,8 +16,8 @@ module Ic
     # Creates MediaType information from a Hash (typically from JSON)
     # @param [Array, String, Fixnum] media_types (nil) contains media type(s)
     # @return [Array<Fixnum>, Fixnum] The medika type(s) using constants
-    def self.from_hash(media_types: nil)
-      return [ DEFAULT ] if media_type.nil?
+    def self.from_hash(media_types: [])
+      return [ DEFAULT ] if media_types.nil? || media_types.empty?
       options2types = lambda do |object|
         case object
           when Array  then object.collect {|item| options2types[item]}.flatten
@@ -26,7 +26,7 @@ module Ic
           else raise ArgumentError, "Unsupported Media Type: #{object}"
         end
       end
-      options2types[options[:media_types]]
+      options2types[media_types]
     end
 
     # Creates a MediaType constant from its string representaion
