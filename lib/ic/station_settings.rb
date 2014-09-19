@@ -11,7 +11,7 @@ module Ic
 
     def initialize(**options)
       raise MissingArgumentError, 'id' unless (@id = options[:id])
-      @media_types = MediaType.from_hash(options)
+      @media_types = MediaType.from_hash(**options)
       @ready       = options.include?(:ready) ? options[:ready] : true
       @session     = options[:session]
       @location    = Ic::Session::BASE_LOCATION + '/station'

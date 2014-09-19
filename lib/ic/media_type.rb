@@ -14,9 +14,10 @@ module Ic
     DEFAULT  = CALL
 
     # Creates MediaType information from a Hash (typically from JSON)
-    # @param [Array, String, Fixnum] media_types (nil) contains media type(s)
+    # @param [Array, String, Fixnum]  media_types ([]) contains media type(s)
+    # @param [Hash]                   options contains other options we can ignore
     # @return [Array<Fixnum>, Fixnum] The medika type(s) using constants
-    def self.from_hash(media_types: [])
+    def self.from_hash(media_types: [], **options)
       return [ DEFAULT ] if media_types.nil? || media_types.empty?
       options2types = lambda do |object|
         case object
