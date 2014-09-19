@@ -236,7 +236,7 @@ module Ic
               results[:values].each do |value|
                 message = Message.from_json(value)
                 trace.debug('messages') { "Received message: #{message}"}
-                notify_observers(message)
+                notify_observers(message: message)
               end
             end
           end
