@@ -46,7 +46,7 @@ module Ic
       logger  = Logger.new(devices, shift_age, shift_size)
       logger.progname  = log_progname
       logger.level     = log_level
-      logger.formatter = log_formatter || Ic::Formatter.new
+      logger.formatter = log_formatter || Formatter.new
       logger
     end
 
@@ -85,7 +85,6 @@ module Ic
     end
   end
 
-  # @private
   class Formatter < ::Logger::Formatter
     def initialize
       super
@@ -106,14 +105,14 @@ module Ic
       @contexts.delete(context)
     end
   end
+  private_constant :Formatter
 
-  # @private
   class NullIO
     def write(*args) ; end
     def close        ; end
   end
+  private_constant :NullIO
 
-  # @private
   class MultiIO
     def initialize(targets = [])
       @targets = targets
@@ -127,4 +126,5 @@ module Ic
       @targets.each(&:close)
     end
   end
+  private_constant :MultiIO
 end
