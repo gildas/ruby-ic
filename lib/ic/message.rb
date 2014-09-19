@@ -1,4 +1,5 @@
 require 'json'
+require 'ic/logger'
 
 module Ic
   # This interface describes the various Message objects that can be received from a CIC Server via the subscription mechanism.
@@ -46,17 +47,23 @@ module Ic
 
     # Creates a specialized {Message} object from JSON data.
     # Member classes must respond to {#from_json}.
-    # @param json [Hash] The JSON representation
+    # @param  [Hash] json             The JSON representation
+    # @param  [Hash] options          Additional options
+    # @option options [Logger] log_to To trace to an existing {Logger}
     # @return [Message] The created {Message}
     # @raise [MissingArgumentError] when the JSON data is missing some mandatory keys (__type)
     # @raise [NotImplementedError]  when no member class implements {#from_json} or has the same urn_type as the JSON data.
-    def self.from_json(json)
+    def self.from_json(json, **options)
+      logger = options[:log_to] || Ic::Logger.create
       raise MissingArgumentError, '__type' unless (type = json[:__type])
+      logger.debug('message') { "Searching type: #{type}" }
       @classes.each do |klass|
         next unless klass.respond_to? :urn_type
+        logger.debug('message') { "Message type: #{klass.urn_type}" }
         if type == klass.urn_type
           raise NotImplementedError, :from_json unless klass.respond_to? :from_json
-          return klass.from_json(json)
+          logger.debug('message') { "   Matched!!!" }
+          return klass.from_json(json, **options)
         end
       end
       raise NotImplementedError, json[:__type]
