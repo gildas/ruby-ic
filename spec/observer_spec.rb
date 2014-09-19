@@ -30,7 +30,7 @@ describe Ic::Observer do
       @logger.info('Example') { @logger.banner(example.description) }
       mutex = Mutex.new
       status_updated = ConditionVariable.new
-      status_observer = @session.subscribe(Ic::UserStatusMessage, user: @session.user) do |statuses|
+      status_observer = @session.subscribe(message_class: Ic::UserStatusMessage, user: @session.user) do |statuses|
         @logger.info('observer') { "Got #{statuses.size} status(es)"}
         statuses.each do |status|
           @logger.info('observer') { "Status for #{status.user_id}: #{status}"}
