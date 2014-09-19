@@ -18,6 +18,8 @@ module Ic
 
     MAX_REDIRECTIONS = 5
 
+    DEFAULT_POLL_FREQUENCY = 5
+
     BASE_LOCATION = '/icws/connection'
 
     attr_reader :id, :application, :user, :client
@@ -40,7 +42,7 @@ module Ic
       @id                     = nil
       @location               = BASE_LOCATION
       @user                   = User.new(session: self, id: options[:user])
-      @message_poll_frequency = options[:poll_frequency] || 1
+      @message_poll_frequency = options[:poll_frequency] || DEFAULT_POLL_FREQUENCY
       @message_thread         = nil
       @message_poll_active    = false
     end
