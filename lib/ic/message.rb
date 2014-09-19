@@ -4,8 +4,9 @@ module Ic
   # This interface describes the various Message objects that can be received from a CIC Server via the subscription mechanism.
   module Message
     # Initializes a new {Message}.
-    # @param isDelta [Boolean] true if this message contains only changed data from a previous {Message}
-    def initialize(isDelta: false)
+    # @param isDelta [Boolean] (false) true if this message contains only changed data from a previous {Message}
+    # @param [Hash]            options contains other options we can ignore
+    def initialize(isDelta: false, **options)
       @is_delta = isDelta
     end
 
