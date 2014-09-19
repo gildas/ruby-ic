@@ -33,8 +33,8 @@ module Ic
       end
     end
 
-    def initialize(options = {})
-      self.create_logger(options)
+    def initialize(**options)
+      self.create_logger(**options)
       @can_have_date   = options.include?(:canHaveDate) ? options[:canHaveDate] : false
       @can_have_time   = options.include?(:canHaveTime) ? options[:canHaveTime] : false
       @group_tag       = options[:groupTag]
@@ -59,6 +59,7 @@ module Ic
       @stations        = options[:stations] || []
       @servers         = options[:icServers] || []
       @user_id         = options[:user_id] || options[:userId]
+      trace.debug('status') { "Status: #{@id} for user: #{@user_id}" }
     end
 
     def can_have_date? ; @can_have_date end
