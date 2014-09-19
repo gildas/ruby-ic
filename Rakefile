@@ -41,5 +41,10 @@ task :config_file do
   end
 end
 
+desc "Starts an IRB console with the gem preloaded"
+task :console do
+  sh "irb -rubygems -I lib -r ic.rb"
+end
+
 desc "Runs the RSpec tests after linking the configuration"
 task :test => [:config_file, :spec]
