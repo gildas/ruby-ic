@@ -2,6 +2,7 @@ require 'ic/exceptions'
 require 'ic/logger'
 
 module Ic
+  # This class is 
   class Observer
     include Traceable
 

@@ -83,7 +83,7 @@ module Ic
     def on_phone? ; @on_phone end
 
     def to_s
-      message || id
+      "#{message || id} for #{user_id}"
     end
   end
 end

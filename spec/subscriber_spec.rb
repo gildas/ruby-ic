@@ -1,7 +1,7 @@
 require 'rspec'
 require 'spec_helper'
 
-describe Ic::Observer do
+describe Ic::Subscriber do
   before(:context) do
     @logger  = Ic::Logger.create(log_to: "tmp/test-#{described_class}.log", log_mode: 'w', log_level: Logger::DEBUG)
     @logger.info('Group') { @logger.banner(described_class.to_s) }
@@ -25,14 +25,14 @@ describe Ic::Observer do
     @logger.close
   end
 
-  context('logger') do
+  context('User') do
     specify 'should be notified when status changes' do |example|
       @logger.info('Example') { @logger.banner(example.description) }
       mutex = Mutex.new
       status_updated = ConditionVariable.new
-      status_observer = @session.subscribe(message_class: Ic::UserStatusMessage, user: @session.user) do |statuses|
-        @logger.info('observer') { "Got #{statuses.size} status(es)"}
-        statuses.each do |status|
+      @session.user.subscribe to: @session, about: Ic::UserStatusMessage do |message|
+        @logger.info('observer') { "Got #{message.statuses.size} status(es)"}
+        message.statuses.each do |status|
           @logger.info('observer') { "Status for #{status.user_id}: #{status}"}
           next unless status.user_id == @session.user.id
           if status.id == 'Do Not disturb'
@@ -52,7 +52,7 @@ describe Ic::Observer do
       new_status = @session.user.status
       expect(new_status).to be_truthy
       expect(new_status.id).to eq 'Do Not disturb'
-      status_observer.stop
+      @session.user.unsubscribe from: @session
     end
   end
 end

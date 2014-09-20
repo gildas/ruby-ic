@@ -53,7 +53,7 @@ module Ic
     # Gives a String representation of this object
     # @return [String] the String representation of this object
     def to_s
-      "#{@statuses.size} Status Message#{@statuses.size > 1 ? 's' : ''}"
+      "#{@statuses.size} Status Message#{@statuses.size > 1 ? 's' : ''}: [#{@statuses.join(',')}]"
     end
   end
 end

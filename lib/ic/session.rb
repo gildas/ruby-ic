@@ -5,7 +5,6 @@ require 'ic/http'
 require 'ic/exceptions'
 require 'ic/logger'
 require 'ic/message'
-require 'ic/observer'
 require 'ic/user'
 require 'ic/license'
 
@@ -214,11 +213,6 @@ module Ic
       http_delete path: "/icws/#{@id}/licenses"
     end
 
-    def subscribe(message_class: nil, **options, &block)
-      raise MissingArgumentError, 'message_class' if message_class.nil?
-      Observer.new(session: self, message_class: message_class).start(**options, &block)
-    end
-
     def to_s
       connected? ? id : ''
     end
@@ -236,6 +230,7 @@ module Ic
             unless results[:values].empty?
               changed
               results[:values].each do |value|
+                trace.debug('messages') { "Received data: #{value}"}
                 message = Message.from_json(value)
                 trace.debug('messages') { "Received message: #{message}"}
                 notify_observers(message: message)
