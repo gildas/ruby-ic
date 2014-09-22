@@ -3,6 +3,7 @@ require 'ic/exceptions'
 module Ic
   # This interface is used to subscribe (observe) an Observable object (e.g.:#{Session})
   module Subscriber
+
     # Subscribes to an {Observable} object for updates on a {Message} type.
     # @param to      [Observable] an {Observable} object
     # @param about   [Message]    the type of {Message}
@@ -12,8 +13,8 @@ module Ic
       raise MissingArgumentError, 'to'    if to.nil?
       raise InvalidTypeError,     'to'    unless to.kind_of? Observable
       raise MissingArgumentError, 'about' if about.nil?
-      #raise InvalidTypeError,     'about' unless about.kind_of? Message
-      @about        = about
+      raise InvalidTypeError,     'about' unless about.kind_of? Message
+      @update_about = about
       @update_block = block
       to.add_observer(self)
       self
