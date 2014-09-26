@@ -1,7 +1,7 @@
 require 'ic/version'
 require 'ic/exceptions'
+require 'ic/subscriber'
 require 'ic/session'
-require 'ic/observer'
 require 'ic/station_settings/workstation_settings'
 require 'ic/station_settings/remote_workstation_settings'
 require 'ic/station_settings/remote_number_settings'
