@@ -49,7 +49,7 @@ module Ic
       # TODO: Add processing for :errorDetails (which has the value of " none" upon success)
     end
 
-    # @returns [Boolean] Tells if a {License}  is available or not.
+    # @return [Boolean] Tells if a {License}  is available or not.
     def available? ; @available end
 
   end
