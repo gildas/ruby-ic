@@ -14,8 +14,8 @@ module Ic
     #   @param id          [String] The country identifier (ISO 3166)
     #   @param name        [String] A human readable name (e.g.: 'France')
     #   @param displayName [String] A synonym for parameter name
-    def initialize(id:, name: nil, displayName: nil)
-      @id   = id
+    def initialize(id: nil, name: nil, displayName: nil)
+      raise MissingArgumentError, 'id' unless (@id = id)
       @name = name || displayName || @id # IC API key: displayName
     end
   end
