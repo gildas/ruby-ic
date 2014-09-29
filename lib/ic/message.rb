@@ -12,7 +12,7 @@ module Ic
     end
 
     # Appends member classes of this mixin to an internal list.
-    # This list will be used by {Message#from_json} to build the actual message.
+    # This list will be used by {Ic::Message#from_json} to build the actual message.
     # @param base [Class] The class object to add
     def self.included(base)
       @classes ||= []
@@ -45,8 +45,8 @@ module Ic
       to_hash.to_json
     end
 
-    # Creates a specialized {Message} object from JSON data.
-    # Member classes must respond to {#from_json}.
+    # Creates a specialized {Ic::Message} object from JSON data.
+    # Member classes must implement the same class method.
     # @param  [Hash] json             The JSON representation
     # @param  [Hash] options          Additional options
     # @option options [Logger] log_to To trace to an existing {Logger}

@@ -30,7 +30,7 @@ module Ic
     end
 
     # Creates an {AsyncOperationCompletedMessage} object from JSON data.
-    # This class method is called by {Message#from_json}
+    # This class method is called by {Ic::Message#from_json}
     # @param  [Hash] json             The JSON representation
     # @param  [Hash] options          Additional options
     # @option options [Logger] log_to To trace to an existing {Logger}

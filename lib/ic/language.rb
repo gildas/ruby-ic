@@ -20,7 +20,7 @@ module Ic
 
     # Requests a list of all languages supported by the CIC server
     # @param session [Session, String] The {Session} to query or its identifier (as a string)
-    # @param options [Hash]            Additional options for the HTTP {Client}
+    # @param options [Hash]            Additional options for the HTTP {HTTP::Client}
     # @return {Array<Language>]        The list of all supported languages
     def self.find_all(session: session, **options)
       session.trace.debug('Language') { "Requesting list of languages, options=#{options}" }

@@ -57,11 +57,11 @@ module Ic
       info[:requestId]
     end
 
-    # Subscribes to an {Observable} object for updates on a {Message} type.
-    # @param to      [Observable] an {Observable} object
+    # Subscribes to an Observable object for updates on a {Message} type.
+    # @param to      [Observable] an Observable object
     # @param about   [Message]    the type of {Message}
     # @param options [Hash]       options
-    # @param block   [Code]       Code to execute when the {Observable} notifies this
+    # @param block   [Code]       Code to execute when the Observable notifies this
     def subscribe(to: nil, about: nil, **options, &block)
       trace.info('subscribe') { "Subscribing to Observable: #{to}"}
       #super.subscribe(to: to, about: about, **options, &block)
@@ -72,8 +72,8 @@ module Ic
       to.http_put path: "/icws/#{to.id}/messaging/subscriptions/status/user-statuses", data: data
     end
 
-    # Unsubscribe from an {Observable} object
-    # @param from [Observable] an {Observable} object
+    # Unsubscribe from an Observable object
+    # @param from [Observable] an Observable object
     def unsubscribe(from: nil)
       trace.info('subscribe') { "Unsubscribing from Observable: #{from}"}
       #super.unsubscribe(from: from)
@@ -83,8 +83,8 @@ module Ic
       #TODO: shouldn't we use a put with a data with current user_ids minus the one we want to stop observe?
     end
 
-    # Called by the {Observable} object when it changes
-    # @param options [Hash] parameters given by the Observable
+    # Called by the Observable object when it changes
+    # @param message [Hash] parameters given by the Observable
     def update(message: {})
       trace.debug('subscribe') { "Received message: #{message}" }
       raise MissingArgumentError, 'message' if message.nil? or message.empty?
