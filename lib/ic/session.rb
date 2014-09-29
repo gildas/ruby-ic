@@ -9,21 +9,72 @@ require 'ic/user'
 require 'ic/license'
 
 module Ic
-  # Session objects are used to manage connections to a CIC Server
+  # This class is used to connect to a CIC Server
+  # 
   class Session
     include Observable
     include Traceable
     include HTTP::Requestor
 
+    # Maximum redirections allowed to alternate CIC servers
     MAX_REDIRECTIONS = 5
 
+    # The default Application name with CIC Server
+    DEFAULT_APPLICATION = "ICWS Ruby Client"
+
+    # How often the poll thread should check for messages
     DEFAULT_POLL_FREQUENCY = 5
 
-    BASE_LOCATION = '/icws/connection'
+    # @return [String] The session identifier with the CIC Server
+    attr_reader :id
 
-    attr_reader :id, :application, :user, :client
+    # @return [String] The application name used when connecting to the CIC Server
+    attr_reader :application
 
-    def initialize(options = {})
+    # @return [User] The {User} connected to the CIC Server
+    attr_reader :user
+
+    # @return [Server] The CIC Server
+    attr_reader :server
+
+    # @return [HTTP::Client] The {HTTP::Client} that communicates with the CIC Server
+    attr_reader :client
+
+    # Class method that initializes a session and connects it to a CIC Server
+    #
+    # @param (see #initialize)
+    # @return [Session] The connected session
+    def self.connect(server: 'localhost', user: nil, password: nil, application: DEFAULT_APPLICATION, poll_frequency: DEFAULT_POLL_FREQUENCY, **options)
+      Session.new(server: server, user: user, password: password, application: application, poll_frequency: poll_frequency, **options).connect
+    end
+
+    # Initializes a new Session.
+    #
+    # The new Session is not yet connected! use {#connect} to connect to a CIC Server
+    #
+    # @example it is possible to load a configuration stored in JSON:
+    #   session = Ic::Session.new(from: 'config/login.json')
+    #
+    # @example combined with {#connect}:
+    #  session = Ic::Session.connect from: 'config/login.json'
+    #
+    # @example or even:
+    #  File.open('config/login.json') do |file|
+    #    session = Ic::Session.connect from: file
+    #  end
+    #
+    # @param server         [String] The CIC Server
+    # @param user           [String] The CIC user to connect with
+    # @param password       [String] The user's password
+    # @param application    [String] The name of the application for the CIC Server
+    # @param poll_frequency [Fixnum] The message poll frequency
+    # @param options        [Hash]   Extra options
+    # @option options [String,File,IO] :from (nil) To load a JSON config
+    # @raise [MissingArgumentError] when the user and/or the password are empty
+    # @raise [InvalidArgumentErrpr] when the :from option is invalid
+    # @see Ic::HTTP::Client for HTTP specific options
+    # @see Ic::Logger       for Logger specific options
+    def initialize(server: 'localhost', user: nil, password: nil, application: DEFAULT_APPLICATION, poll_frequency: DEFAULT_POLL_FREQUENCY, **options)
       if options[:from]
         config = {}
         case options[:from]
@@ -33,23 +84,31 @@ module Ic
         end
         options = config.keys2sym.merge(options)
       end
-      raise MissingArgumentError, 'user'     unless options[:user]
-      raise MissingArgumentError, 'password' unless (@password = options[:password])
-      self.create_logger(options)
-      @application            = options[:application] || 'icws client'
-      self.client             = options[:httpclient]  || Ic::HTTP::Client.new(options.merge(log_to: logger))
+      raise MissingArgumentError, 'user'     unless user
+      raise MissingArgumentError, 'password' unless (@password = password)
+      self.create_logger(**options)
+      @application            = application
+      @server                 = server
+      self.client             = Ic::HTTP::Client.new(options.merge(log_to: logger))
       @id                     = nil
-      @location               = BASE_LOCATION
-      @user                   = User.new(session: self, id: options[:user])
-      @message_poll_frequency = options[:poll_frequency] || DEFAULT_POLL_FREQUENCY
+      @location               = '/icws/connection'
+      @user                   = User.new(session: self, id: user)
+      @message_poll_frequency = poll_frequency
       @message_thread         = nil
       @message_poll_active    = false
     end
 
-    def self.connect(options = {})
-      Session.new(options).connect
-    end
-
+    # Connects to the CIC Server that was given during {#initialize}
+    #
+    # If the Session was already connected, it is disconnected before proceeding.
+    # The connection process handles also Switchover pairs or alternate
+    # servers up to {MAX_REDIRECTIONS}.
+    #
+    # Upon successful connection, the session starts polling for messages.
+    #
+    # @return [Session] The connected session
+    # @raise [KeyError]                 when the response does not contain proper data
+    # @raise [TooManyRedirectionsError] when too many redirections occur
     def connect
       disconnect if connected?
       data = {
@@ -63,7 +122,7 @@ module Ic
       loop do
         trace.info('Session') { "Connecting application \"#{@application}\" to #{server} as #{@user}" }
         begin
-          session_info = http_post server: server, path: BASE_LOCATION, data: data
+          session_info = http_post server: server, path: @location, data: data
           raise KeyError, 'sessionId' unless (@id       = session_info[:sessionId])
           raise KeyError, 'location'  unless (@location = session_info[:location])
           raise KeyError, 'csrfToken' unless session_info[:csrfToken]
@@ -83,6 +142,13 @@ module Ic
       end
     end
 
+    # Disconnects from the current CIC Server
+    #
+    # If the Session was already disconnected, the method silently returns.
+    #
+    # Before disconnecting, the Session stops polling for messages.
+    #
+    # @return [Session] The disconnected session
     def disconnect
       return self unless connected?
       trace.info('messages') { "Stopping Message polling" }
@@ -96,39 +162,51 @@ module Ic
       self
     end
 
+    # Tells if the session is currently connected to a CIC Server
+    # @return [Boolean] True if the session is connected
     def connected?
       ! @id.nil?
     end
 
-    def location
-      connected? ? @location : BASE_LOCATION
-    end
-
-    def server
-      @client.server
-    end
-
+    # Contains the language for the localized messages from the CIC Server
+    #
+    # The language format is: xx-yy,
+    # where xx is the language code and yy is the country code
+    #
+    # return [String] The current language
+    # @see http://www.iso.org/iso/home/standards/language_codes.htm Language codes (ISO 639-1)
+    # @see http://www.iso.org/iso/country_codes.htm Country codes (ISO 3166)
     def language
       @client.language
     end
 
+    # Queries the CIC Server for its version
+    #
+    # @return [String] The collected version information
     def version
-      version = http_get path: "#{BASE_LOCATION}/version"
+      version = http_get path: "#{@location}/version"
       trace.info('Session') { "Server version: #{version}" }
       version
     end
 
+    # Queries the CIC Server for all licensed features
+    #
+    # @return [Array<String>] A list of feature names
     def features
-      features = @client.get path: "#{BASE_LOCATION}/features"
+      features = @client.get path: "#{@location}/features"
       trace.info('Session') { "Server features: #{features}" }
       raise ArgumentError, 'featureInfoList' unless features[:featureInfoList]
       features[:featureInfoList]
     end
 
+    # Queries the CIC Server to know if a feature is licensed ot not
+    #
+    # @param feature [String] The feature name
+    # @return [Boolean] True if the feature is licensed
     def feature?(feature)
       begin
         trace.debug('Session') { "Querying feature \"#{feature}\""}
-        feature = http_get path: "#{BASE_LOCATION}/features/#{feature}"
+        feature = http_get path: "#{@location}/features/#{feature}"
         trace.info('Session') { "Supported feature: #{feature}" }
         true
       rescue HTTP::BadRequestError => e
@@ -137,13 +215,22 @@ module Ic
       end
     end
 
-    def feature(feature)
+    # Queries the CIC Server for information about a feature
+    #
+    # @param feature [String] The feature name
+    # @return [Hash] The feature information
+    # @raise [HTTP::BadRequestError] when the feature is not licensed or does not exist
+    def feature(feature: '')
       trace.debug('Session') { "Querying feature \"#{feature}\""}
-      feature = http_get path: "#{BASE_LOCATION}/features/#{feature}"
+      feature = http_get path: "#{@location}/features/#{feature}"
       trace.info('Session') { "Supported feature: #{feature}" }
       feature
     end
 
+    # Queries the CIC Server for the currently connected session.
+    #
+    # @return [Hash] A Hash representation of the station
+    # @raise [StationNotFoundError] when no station was found
     def station
       begin
         trace.debug('Session') { "Querying existing station connection" }
@@ -157,7 +244,12 @@ module Ic
       end
     end
 
-    def station=(station)
+    # Connects to the given station
+    #
+    # @param station [Hash] a Hash representing the station
+    # @raise [StationNotFoundError] when no station was found
+    # @raise [KeyError]             when no location was retrieved
+    def station=(station: {})
       if station.nil?
         # Disconnect from the current station
         trace.debug('Session') { 'Disconnecting from all stations' }
@@ -176,7 +268,12 @@ module Ic
       end
     end
 
-    def unique_auth_token(seed)
+    # Queries the CIC server for an authentication token.
+    #
+    # @param seed [string] The seed for the token
+    # @return [string]     The authentication token
+    # @raise [StationNotFoundError] when no token could be calculated
+    def unique_auth_token(seed: '')
       begin
         trace.debug('Session') { 'Requesting a Unique Authentication Token' }
         token = http_post path: "#{location}/unique-auth-token", data: { authTokenSeed: seed}, session: self
@@ -189,7 +286,12 @@ module Ic
       end
     end
 
-    def acquire_licenses(*licenses)
+    # Acquires licenses from the CIC Server
+    #
+    # @param licenses [Array<#id, string>] Licenses to acquire
+    # @return [Array<License>]             Acquired licenses
+    # @raise [ArgumentError] when no licenses could be retrieved
+    def acquire_licenses(licenses: [])
       return if licenses.empty?
       data = {
           licenseList: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
@@ -199,6 +301,11 @@ module Ic
       results[:licenseOperationResultList].collect { |item| License.new(item.merge(session: self)) }
     end
 
+    # Replaces licenses from the CIC Server
+    #
+    # @param licenses [Array<#id, string>] Licenses to replace
+    # @return [Array<License>]             Replaced licenses
+    # @raise [ArgumentError] when no licenses could be retrieved
     def replace_licenses(*licenses)
       return if licenses.empty?
       data = {
@@ -209,16 +316,28 @@ module Ic
       results[:licenseOperationResultList].collect { |item| License.new(item.merge(session: self)) }
     end
 
+    # Releases all licenses from the CIC Server
     def release_all_licenses
       http_delete path: "/icws/#{@id}/licenses"
     end
 
+    # String representation of a Session
+    #
+    # @return [String] String representation
     def to_s
       connected? ? id : ''
     end
 
     private
 
+    # Queries a CIC server for new messages
+    #
+    # The server is querie every @message_poll_frequency seconds as specified
+    # when initializing the Session object.
+    #
+    # When messages are received, it dispatches the messages to the Session's subscribers.
+    #
+    # The inner threqd ends when the session is disconnected
     def poll_messages
       @message_poll_active = true
       @message_thread = Thread.new do
