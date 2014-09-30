@@ -12,7 +12,7 @@ module Ic
     end
 
     # Appends member classes of this mixin to an internal list.
-    # This list will be used by {Ic::Message#from_json} to build the actual message.
+    # This list will be used by {Ic::Message.from_json} to build the actual message.
     # @param base [Class] The class object to add
     def self.included(base)
       @classes ||= []
@@ -52,7 +52,7 @@ module Ic
     # @option options [Logger] log_to To trace to an existing {Logger}
     # @return [Message] The created {Message}
     # @raise [MissingArgumentError] when the JSON data is missing some mandatory keys (__type)
-    # @raise [NotImplementedError]  when no member class implements {#from_json} or has the same urn_type as the JSON data.
+    # @raise [NotImplementedError]  when no member class implements {Message.from_json} or has the same urn_type as the JSON data.
     def self.from_json(json, **options)
       logger = options[:log_to] || Ic::Logger.create
       raise MissingArgumentError, '__type' unless (type = json[:__type])

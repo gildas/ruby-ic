@@ -44,7 +44,7 @@ module Ic
     #
     # @param (see #initialize)
     # @return [Session] The connected session
-    def self.connect(server: 'localhost', user: nil, password: nil, application: DEFAULT_APPLICATION, poll_frequency: DEFAULT_POLL_FREQUENCY, **options)
+    def self.connect(server: nil, user: nil, password: nil, application: nil, poll_frequency: nil, **options)
       Session.new(server: server, user: user, password: password, application: application, poll_frequency: poll_frequency, **options).connect
     end
 
@@ -52,7 +52,13 @@ module Ic
     #
     # The new Session is not yet connected! use {#connect} to connect to a CIC Server
     #
-    # @example it is possible to load a configuration stored in JSON:
+    # it is possible to load a configuration stored in JSON, by providing a :from
+    # in the options hash. Note the keyword values override the JSON config.
+    #
+    # @example Create a new Session via the keywords:
+    #   session = Ic::Session.new(server: 'localhost', user: 'admin', password: 'S3cr3t')
+    #
+    # @example loading a configuration stored in JSON:
     #   session = Ic::Session.new(from: 'config/login.json')
     #
     # @example combined with {#connect}:
@@ -71,10 +77,10 @@ module Ic
     # @param options        [Hash]   Extra options
     # @option options [String,File,IO] :from (nil) To load a JSON config
     # @raise [MissingArgumentError] when the user and/or the password are empty
-    # @raise [InvalidArgumentErrpr] when the :from option is invalid
+    # @raise [InvalidArgumentError] when the :from option is invalid
     # @see Ic::HTTP::Client for HTTP specific options
     # @see Ic::Logger       for Logger specific options
-    def initialize(server: 'localhost', user: nil, password: nil, application: DEFAULT_APPLICATION, poll_frequency: DEFAULT_POLL_FREQUENCY, **options)
+    def initialize(server: nil, user: nil, password: nil, application: nil, poll_frequency: nil, **options)
       if options[:from]
         config = {}
         case options[:from]
@@ -84,16 +90,16 @@ module Ic
         end
         options = config.keys2sym.merge(options)
       end
-      raise MissingArgumentError, 'user'     unless user
-      raise MissingArgumentError, 'password' unless (@password = password)
+      raise MissingArgumentError, 'user'     unless (user ||= options[:user])
+      raise MissingArgumentError, 'password' unless (@password = password || options[:password])
       self.create_logger(**options)
-      @application            = application
-      @server                 = server
+      @application            = application || options[:application] || DEFAULT_APPLICATION
+      @server                 = server || options[:server] || 'localhost'
       self.client             = Ic::HTTP::Client.new(options.merge(log_to: logger))
       @id                     = nil
       @location               = '/icws/connection'
       @user                   = User.new(session: self, id: user)
-      @message_poll_frequency = poll_frequency
+      @message_poll_frequency = poll_frequency || DEFAULT_POLL_FREQUENCY
       @message_thread         = nil
       @message_poll_active    = false
     end
