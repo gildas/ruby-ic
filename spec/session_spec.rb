@@ -57,7 +57,7 @@ describe Ic::Session do
       @config[:log_to] = "tmp/test-#{described_class}-Feature.log"
       session = Ic::Session.new(@config)
       expect(session).to be_truthy
-      feature = session.feature('connection')
+      feature = session.feature(feature: 'connection')
       expect(feature[:version]).to be >= 1
     end
 
