@@ -17,6 +17,24 @@ describe Ic::Session do
      @config[:persistent] ||= false
   end
 
+  context 'initialization' do
+    specify 'can be configured manually' do
+      @config[:log_to] = "tmp/test-#{described_class}-Initialize-manually.log"
+      session = Ic::Session.new(server: 'my-cic', user: 'admin', password: 'S3cr3t')
+      expect(session).to be_truthy
+      expect(session.server).to  eq 'my-cic'
+      expect(session.user.id).to eq 'admin'
+    end
+
+    specify 'can be configured via @config' do
+      @config[:log_to] = "tmp/test-#{described_class}-Initialize-config.log"
+      session = Ic::Session.new(@config)
+      expect(session).to be_truthy
+      expect(session.server).to  eq @config[:server]
+      expect(session.user.id).to eq @config[:user]
+    end
+  end
+
   context 'valid server and credentials' do
     specify 'should connect and disconnect' do
       @config[:log_to] = "tmp/test-#{described_class}-Connect.log"
@@ -172,7 +190,7 @@ describe Ic::Session do
       begin
         require 'securerandom'
 
-        token = session.unique_auth_token(SecureRandom.uuid)
+        token = session.unique_auth_token(seed: SecureRandom.uuid)
         expect(token).to be_instance_of String
       ensure
         session.disconnect

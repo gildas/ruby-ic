@@ -95,13 +95,14 @@ module Ic
       self.create_logger(**options)
       @application            = application || options[:application] || DEFAULT_APPLICATION
       @server                 = server || options[:server] || 'localhost'
-      self.client             = Ic::HTTP::Client.new(options.merge(log_to: logger))
+      self.client             = Ic::HTTP::Client.new(server: @server, log_to: logger, **options)
       @id                     = nil
       @location               = '/icws/connection'
       @user                   = User.new(session: self, id: user)
       @message_poll_frequency = poll_frequency || DEFAULT_POLL_FREQUENCY
       @message_thread         = nil
       @message_poll_active    = false
+      trace.debug('Session') { "Server: \"#{server}\", options: #{options[:server]} => @server: \"#{@server}\"" }
     end
 
     # Connects to the CIC Server that was given during {#initialize}
@@ -161,7 +162,7 @@ module Ic
       @message_poll_active = false
       @message_thread.join
       trace.debug('Session') { "Disconnecting from #{client.server}" }
-      http_delete path: location, session: self
+      http_delete path: @location, session: self
       trace.info('Session') { "Successfully disconnected from #{client.server}" }
       logger.remove_context(session: @id)
       @id = nil
@@ -240,7 +241,7 @@ module Ic
     def station
       begin
         trace.debug('Session') { "Querying existing station connection" }
-        station = http_get path: "#{location}/station"
+        station = http_get path: "#{@location}/station"
         trace.info('Session') { "Connected Station: #{station}" }
         station
       rescue HTTP::NotFoundError => e
@@ -252,18 +253,18 @@ module Ic
 
     # Connects to the given station
     #
-    # @param station [Hash] a Hash representing the station
+    # @param station [Ic::StationSettings] a Hash representing the station
     # @raise [StationNotFoundError] when no station was found
     # @raise [KeyError]             when no location was retrieved
-    def station=(station: {})
+    def station=(station)
       if station.nil?
         # Disconnect from the current station
         trace.debug('Session') { 'Disconnecting from all stations' }
-        http_delete path: "#{location}/station", session: self
+        http_delete path: "#{@location}/station", session: self
       else
         trace.debug('Session') { "Connecting to station #{station}" }
         begin
-          station_info = http_put path: "#{location}/station", data: station, session: self
+          station_info = http_put path: "#{@location}/station", data: station, session: self
           trace.info('Session') { "Successfully Connected to Station: #{station_info}" }
           raise KeyError, 'location'  unless (station.location = station_info[:location])
         rescue HTTP::NotFoundError => e
@@ -282,7 +283,7 @@ module Ic
     def unique_auth_token(seed: '')
       begin
         trace.debug('Session') { 'Requesting a Unique Authentication Token' }
-        token = http_post path: "#{location}/unique-auth-token", data: { authTokenSeed: seed}, session: self
+        token = http_post path: "#{@location}/unique-auth-token", data: { authTokenSeed: seed}, session: self
         trace.info('Session') { "Unique Authentication Token: #{token}" }
         token[:authToken]
       rescue HTTP::NotFoundError => e
@@ -299,6 +300,7 @@ module Ic
     # @raise [ArgumentError] when no licenses could be retrieved
     def acquire_licenses(licenses: [])
       return if licenses.empty?
+      licenses = [ licenses ] unless licenses.respond_to? :collect
       data = {
           licenseList: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
       }
