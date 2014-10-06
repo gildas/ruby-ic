@@ -14,9 +14,9 @@ module Ic
     DEFAULT  = CALL
 
     # Creates MediaType information from a Hash (typically from JSON)
-    # @param [Array, String, Fixnum]  media_types ([]) contains media type(s)
-    # @param [Hash]                   options contains other options we can ignore
-    # @return [Array<Fixnum>, Fixnum] The medika type(s) using constants
+    # @param media_types [Array, String, Fixnum]  ([]) contains media type(s)
+    # @param options     [Hash]                   contains other options we can ignore
+    # @return [Array<Fixnum>, Fixnum] The media type(s) using constants
     def self.from_hash(media_types: [], **options)
       return [ DEFAULT ] if media_types.nil? || media_types.empty?
       options2types = lambda do |object|
@@ -31,7 +31,7 @@ module Ic
     end
 
     # Creates a MediaType constant from its string representaion
-    # @param  [string] string The name of the MediaType
+    # @param string [string] The name of the MediaType
     # @return [Fixnum] The MediaType identifier
     def self.from_string(string)
       return ALL     if string =~ /^(all)$/i
