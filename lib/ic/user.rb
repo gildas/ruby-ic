@@ -85,9 +85,9 @@ module Ic
 
     # Called by the Observable object when it changes
     # @param message [Hash] parameters given by the Observable
-    def update(message: {})
+    def update(message: nil)
       trace.debug('subscribe') { "Received message: #{message}" }
-      raise MissingArgumentError, 'message' if message.nil? or message.empty?
+      raise MissingArgumentError, 'message' if message.nil?
       raise InvalidArgumentError, 'message' unless message.kind_of? Message
       begin
         @update_block.call(message) if @update_block
