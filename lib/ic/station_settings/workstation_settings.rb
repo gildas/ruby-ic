@@ -18,7 +18,7 @@ module Ic
     def initialize(**options)
       super(**options)
       self.create_logger(**options, default: @session)
-      trace.debug('Workstation') { "Workstation: id=#{@id}, ready? #{ready?}" }
+      trace.debug('Workstation') { "Workstation: id=#{@id}, ready? #{ready_for_interactions?}" }
     end
 
     def to_hash
