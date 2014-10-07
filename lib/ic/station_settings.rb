@@ -12,11 +12,9 @@ module Ic
 
     # @return [Session] the current session
     attr_reader :session
-    attr_writer :session
 
     # @return [String] The location path in the URL
     attr_reader :location
-    attr_writer :location
 
     # @return [Array<Fixnum>] The supported media types, see {MediaType}
     attr_reader :media_types
@@ -29,6 +27,8 @@ module Ic
     # @param id                     [String]                 The Station identifier
     # @param media_types            [Array, String, Fixnum]  ([]) contains media type(s), see {MediaType}
     # @param ready_for_interactions [Boolean]                True if ready to receive interactions
+    # @param options                [Hash]                   extra options
+    # @raise [MissingArgumentError] When id is null.
     def initialize(id: nil, media_types: [], ready_for_interactions: true, **options)
       raise MissingArgumentError, 'id' unless (@id = id)
       @media_types            = MediaType.from_hash(media_types: media_types, **options)
@@ -91,13 +91,14 @@ module Ic
     def self.from_json(json, **options)
       logger = options[:log_to] || Ic::Logger.create
       raise MissingArgumentError, '__type' unless (type = json[:__type])
-      logger.debug('message') { "Searching type: #{type}" }
+      logger.debug('station') { "Searching type: #{type}" }
       @classes.each do |klass|
         next unless klass.respond_to? :urn_type
-        logger.debug('message') { "Message type: #{klass.urn_type}" }
+        next unless klass.respond_to? :station_setting
+        logger.debug('station') { "StationSettings #{klass} type: #{klass.urn_type}, type id: #{klass.station_setting}" }
         if type == klass.urn_type
           raise NotImplementedError, :from_json unless klass.respond_to? :from_json
-          logger.debug('message') { "   Matched!!!" }
+          logger.debug('station') { "   Matched!!!" }
           return klass.from_json(json, **options)
         end
       end
