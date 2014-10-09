@@ -21,6 +21,10 @@ Or install it yourself as:
 
 TODO: Write usage instructions here
 
+## Online Documentation
+
+The online documentation can be found at: http://rubydoc.info/github/gildas/ruby-ic
+
 ## Testing
 in the spec folder, write a **login.json** file that contains the server and the credentials for the test:
 ```json
