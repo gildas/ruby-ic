@@ -45,8 +45,8 @@ module Ic
     # @return [String] The CIC servers where this Status is valid
     attr_reader :servers
 
-    # @return [String] The CIC User Identifier concerned by this Status
-    attr_reader :user_id
+    # @return [User] The CIC User concerned by this Status
+    attr_reader :user
 
     # Collects all Status Messages from a CIC server
     #
@@ -113,10 +113,16 @@ module Ic
       @until           = DateTime.parse(options[:until]) if options.include?(:until)
       @stations        = options[:stations] || []
       @servers         = options[:icServers] || []
-      @user_id         = options[:user_id] || options[:userId]
-# TODO: Use some smart User find (that checks against the Session user to avoid querying all the time) as well
-      @user            = User.new(session: @session, id: @user_id) unless @user_id.nil?
-      trace.debug('status') { "Status: #{@id} for user: #{@user_id}" }
+      @session         = options[:session]
+      if (options[:user])
+        @user      = options[:user]
+        @session ||= @user.session  # Get the Session from the User if we don't have it
+      elsif options[:user_id]
+        @user = User.new(id: options[:user_id], session: @session, **options)
+      elsif !@session.nil? && @session.respond_to :user
+        @user = @session.user
+      end
+      trace.debug('status') { "Status: #{@id} for user: #{@user}" }
     end
 
     # @return [Boolean] True if the Status can contain a date
