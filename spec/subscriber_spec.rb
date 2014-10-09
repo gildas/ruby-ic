@@ -34,7 +34,7 @@ describe Ic::Subscriber do
         @logger.info('observer') { "Got #{message.statuses.size} status(es)"}
         message.statuses.each do |status|
           @logger.info('observer') { "Status for #{status.user}: #{status}"}
-          next unless status.user_id == @session.user.id
+          next unless status.user.id == @session.user.id
           if status.id == 'Do Not disturb'
             @logger.debug('observer') { 'Found the expected status'}
             mutex.synchronize do

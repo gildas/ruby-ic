@@ -52,53 +52,52 @@ module Ic
 
     # Susbcribe to a {Session} for updates about a user or some users.
     #
-    # The user or users can be given as User or their string identifiers.
+    # The data can be given as User or their string identifiers.
+    # The data can be a single object or an Enumerable of objects.
     #
-    # If no users are given, no subscription is sent to CIC.
+    # If data is empty, no subscription is sent to CIC.
     #
     # @example
-    #   UserStatusMessage.subscribe(session: session, users: [ 'cicadmin', user1, user2 ])
+    #   UserStatusMessage.subscribe(session: session, data: [ 'cicadmin', user1, user2 ])
     #
     # @example with only one user:
-    #  UserStatusMessage.subscribe(session: session, user: user1)
-    #
-    # @note if both :user and :users are given, they are merged.
+    #  UserStatusMessage.subscribe(session: session, data: user1)
     #
     # @param session [Session] The Session
-    # @param users   [Array<User,String>] Contains the users (or their identifier)
-    # @param user    [User,String]        Contains the user (or their identifier)
+    # @param data    [Array<User,String>] Contains the users (or their identifier)
     # @raise [MissingSessionError] When the session is missing
-    def self.subscribe(session: nil, user: nil, users: [])
+    def self.subscribe(session: nil, data: nil)
       raise MissingSessionError if session.nil?
-      users.push(user) if user
-      return if users.empty?
-      data = { userIds: users.collect {|user| user.respond_to?(:id) ? user.id : user } }
-      session.http_put path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses", data: data
+      data ||= [] # At least we must have an empty array
+      data = [ data ] unless data.kind_of? Enumerable
+      return if data.empty?
+      session.http_put path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses", data: { userIds: data.collect {|item| item.respond_to?(:id) ? item.id : item } }
     end
 
     # Unsubscribe from a {Session} for updates about a user or some users.
     #
-    # The user or users can be given as User or their string identifiers.
+    # The data can be given as User or their string identifiers.
+    # The data can be a single object or an Enumerable of objects.
     #
-    # If no users are given, all currently active subscriptions are canceled from CIC.
+    # If data is empty, all currently active subscriptions are canceled from CIC.
     #
     # @example
-    #   UserStatusMessage.unsubscribe(session: session, users: [ 'cicadmin', user1, user2 ])
+    #   UserStatusMessage.unsubscribe(session: session, data: [ 'cicadmin', user1, user2 ])
     #
     # @example with only one user:
-    #  UserStatusMessage.unsubscribe(session: session, user: user1)
+    #  UserStatusMessage.unsubscribe(session: session, data: user1)
     #
-    # @note if both :user and :users are given, they are merged.
     # @note At the moment, it is not possible to unsubscribe one or a few users only. All subscriptions are canceled.
     #
     # @param session [Session] The Session
     # @param users   [Array<User,String>] Contains the users (or their identifier)
     # @param user    [User,String]        Contains the user (or their identifier)
     # @raise [MissingSessionError] When the session is missing
-    def self.unsubscribe(session: nil, user: nil, users: [])
+    def self.unsubscribe(session: nil, data: nil)
       raise MissingSessionError if session.nil?
-      users.push(user) if user
-      if users.empty?
+      data ||= [] # At least we must have an empty array
+      data = [ data ] unless data.kind_of? Enumerable
+      if data.empty?
         session.http_delete path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses"
       else
         #TODO: We need to unsubscribe only the given User list!!!

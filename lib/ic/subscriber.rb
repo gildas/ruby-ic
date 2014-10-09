@@ -4,37 +4,63 @@ module Ic
   # This interface is used to subscribe (observe) an Observable object (e.g.:#{Session})
   module Subscriber
 
-    # Subscribes to an Observable object for updates on a {Message} type.
+    # Subscribes to a {Message} on the current {Session}
     #
-    # @param to      [Observable] an Observable object
-    # @param about   [Message]    the type of {Message}
-    # @param options [Hash]       options
-    # @param block   [Code]       Code to execute when the Observable notifies this
-    def subscribe(to: nil, about: nil, **options, &block)
-      raise MissingArgumentError, 'to'    if to.nil?
-      raise InvalidTypeError,     'to'    unless to.kind_of? Observable
-      raise MissingArgumentError, 'about' if about.nil?
-      raise InvalidTypeError,     'about' unless about.kind_of? Message
-      @update_about = about
+    # The Class must have an instance variable named @session ({Session}).
+    #
+    # @param to      [Class] the type of {Message}
+    # @param options [Hash]  options
+    # @param block   [Code]  Code to execute when the Observable notifies this
+    # @raise [MissingArgumentError] when 'to' is missing
+    # @raise [InvalidTypeError]     when 'to' cannot #subscribe
+    # @raise [MissingSessionError]  when the session is missing
+    def subscribe(to: nil, **options, &block)
+      raise MissingArgumentError, 'to'      if     to.nil?
+      raise InvalidTypeError,     'to'      unless to.respond_to? :subscribe
+      raise MissingSessionError             unless session = self.instance_variable_get(:@session)
+      raise InvalidTypeError,     'session' unless session.kind_of? Session
+
+      self.trace.info('subscribe') { "Subscribing #{self.class} #{self} to #{to} on session #{@session}"} if self.respond_to? :trace
+      @update_about = to
       @update_block = block
-      to.add_observer(self)
+      session.add_observer(self)
+      to.subscribe(session: session, data: self)
       self
     end
 
-    # Unsubscribe from an Observable object
-    # @param from [Observable] an Observable object
+    # Unsubscribe from a {Message} on the current {Session}.
+    #
+    # The Class must have an instance variable named @session ({Session}).
+    #
+    # @param from    [Class] the type of {Message}
+    # @param options [Hash]  options
+    # @param block   [Code]  Code to execute when the Observable notifies this
+    # @raise [MissingArgumentError] when 'from' is missing
+    # @raise [InvalidTypeError]     when 'from' cannot #unsubscribe
+    # @raise [MissingSessionError]  when the session is missing
     def unsubscribe(from: nil)
-      raise MissingArgumentError, 'from' if from.nil?
-      raise InvalidTypeError,     'from' unless from.kind_of? Observable
-      from.delete_observer(self)
+      raise MissingArgumentError, 'from'    if from.nil?
+      raise InvalidTypeError,     'from'    unless from.respond_to? :unsubscribe
+      raise MissingSessionError             unless session = self.instance_variable_get(:@session)
+      raise InvalidTypeError,     'session' unless session.kind_of? Session
+      self.trace.info('subscribe') { "Unsubscribing #{self.class} #{self} from #{from} on session #{session}"} if self.respond_to? :trace
+      session.delete_observer(self)
       @update_about = @update_block = nil
+      from.unsubscribe(session: session, data: self)
       self
     end
 
     # Called by the Observable object when it changes
-    # @param options [Hash] parameters given by the Observable
-    def update(**options)
-      @update_block.call(**options) if @update_block
+    #
+    # @param data [Object] Data given by the Observable object
+    def update(data)
+      self.trace.info('subscribe')  { "Received update!"     } if self.respond_to? :trace
+      self.trace.debug('subscribe') { "update data: #{data}" } if self.respond_to? :trace
+      begin
+        @update_block.call(data) if @update_block
+      rescue
+        self.trace.error('subscribe') { "While executing code block: #{@update_block}, Exception: #{$!}" } if self.respond_to? :trace
+      end
     end
   end
 end

@@ -84,50 +84,6 @@ module Ic
       info[:requestId]
     end
 
-    # Subscribes to a {Message} on the current {Session}
-    #
-    # @param to      [Message]    the type of {Message}
-    # @param options [Hash]       options
-    # @param block   [Code]       Code to execute when the Observable notifies this
-    # @raise [MissingSessionError] when the session is missing
-    def subscribe(to: nil, **options, &block)
-      raise MissingArgumentError, 'to' if to.nil?
-      trace.info('subscribe') { "Subscribing user #{self} to message #{to} on session #{@session}"}
-      #super.subscribe(to: to, about: about, **options, &block)
-      @update_about = to
-      @update_block = block
-      @session.add_observer(self)
-      to.subscribe(session: @session, user: self)
-    end
-
-    # Unsubscribe from an Observable object
-    #
-    # @param from [Observable] an Observable object
-    # @raise [MissingSessionError] when the session is missing
-    def unsubscribe(from: nil)
-      trace.info('subscribe') { "Unsubscribing user #{self} from message #{from} on session #{@session}"}
-      #super.unsubscribe(from: from)
-      @session.delete_observer(self)
-      @update_about = @update_block = nil
-      from.unsubscribe(session: @session, user: self)
-    end
-
-    # Called by the Observable object when it changes
-    #
-    # @param message [Hash] parameters given by the Observable
-    # @raise [MissingArgumentError] when the message is missing
-    # @raise [InvalidArgumentError] when the message is invalid
-    def update(message)
-      trace.debug('subscribe') { "Received message: #{message}" }
-      raise MissingArgumentError, 'message' if message.nil?
-      raise InvalidArgumentError, 'message' unless message.kind_of? Message
-      begin
-        @update_block.call(message) if @update_block
-      rescue
-        trace.error('subscribe') { "While executing code block: #{@update_block}, Exception: #{$!}" }
-      end
-    end
-
     # String representation of a User
     #
     # @return [String] String representation
