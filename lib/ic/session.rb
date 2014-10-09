@@ -266,7 +266,8 @@ module Ic
         begin
           station_info = http_put path: "#{@location}/station", data: station, session: self
           trace.info('Session') { "Successfully Connected to Station: #{station_info}" }
-          raise KeyError, 'location'  unless (station.location = station_info[:location])
+          # TODO: Not too sure what to do with the location received from CIC...
+          raise KeyError, 'location'  unless (station_info[:location])
         rescue HTTP::NotFoundError => e
           error = JSON.parse(e.message).keys2sym
           raise StationNotFoundError, station[:workstation] || station[:remoteNumber] if error[:errorId] == '-2147221496'

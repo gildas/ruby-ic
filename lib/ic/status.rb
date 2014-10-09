@@ -119,7 +119,7 @@ module Ic
         @session ||= @user.session  # Get the Session from the User if we don't have it
       elsif options[:user_id]
         @user = User.new(id: options[:user_id], session: @session, **options)
-      elsif !@session.nil? && @session.respond_to :user
+      elsif !@session.nil? && @session.respond_to?(:user)
         @user = @session.user
       end
       trace.debug('status') { "Status: #{@id} for user: #{@user}" }
@@ -162,7 +162,7 @@ module Ic
     #
     # @return [String] String representation
     def to_s
-      "#{message || id} for #{user_id}"
+      "#{message || id} for #{user}"
     end
   end
 end

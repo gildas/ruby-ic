@@ -33,11 +33,11 @@ module Ic
     # @see Ic::HTTP::Client for HTTP specific options
     # @see Ic::Logger       for Logger specific options
     # @raise [MissingArgumentError] when the session is missing
-    def initialize(id: nil, session: nil, **options)
+    def initialize(id: nil, session: nil, display: nil, **options)
       raise MissingArgumentError, 'session'     unless (@session = session)
       self.create_logger(**options, default: @session)
       @id         = id || @session.user.id
-      @display    = display || @id
+      @display    = display || options[:userDisplayName] || @id
       self.client = @session.client
       logger.add_context(user: @id)
     end

@@ -19,7 +19,7 @@ describe Ic::Status do
   context 'logger' do
     specify 'should have a list' do |example|
       @logger.info('Example') { @logger.banner(example.description) }
-      statuses = Ic::Status.find_all(@session)
+      statuses = Ic::Status.find_all(session: @session)
       expect(statuses).to be_truthy
       expect(statuses.empty?).to be false
       expect(statuses.find_index {|status| status.id == 'Available'}).to be > -1
@@ -31,7 +31,7 @@ describe Ic::Status do
       expect(session).to be_truthy
       expect(session.connected?).to be true
       begin
-        statuses = Ic::Status.find_all(session)
+        statuses = Ic::Status.find_all(session: session)
         expect(statuses).to be_truthy
         expect(statuses.empty?).to be false
         expect(statuses.find_index {|status| status.id == 'Available'}).to be > -1
@@ -43,7 +43,7 @@ describe Ic::Status do
 
     specify 'should have a list for logged in user' do |example|
       @logger.info('Example') { @logger.banner(example.description) }
-      statuses = Ic::Status.find_all_ids(@session, user: @session.user)
+      statuses = Ic::Status.find_all_ids(session: @session, user: @session.user)
       expect(statuses).to be_truthy
       expect(statuses.empty?).to be false
       expect(statuses.find_index {|status_id| status_id == 'Available'}).to be > -1
