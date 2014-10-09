@@ -13,7 +13,7 @@ class String
   #   => "myValue"
   #
   # @param lower [Boolean] If true, the first character will be lowercase
-  # @return [String] The camelized rSstring
+  # @return [String] The camelized Sstring
   def to_camel(lower: false)
     return self unless self =~ /_/
     if lower
@@ -39,6 +39,38 @@ class String
   end
 end
 
+# Additional methods for the Symbol class.
+#
+# @see {::Symbol} for general documentation about Symbol in Ruby.
+class Symbol
+  # This method will "camelize" a Symbol
+  # 
+  # @example
+  #   :my_value.to_camel
+  #   => :MyValue
+  #
+  # @example
+  #   :my_value.to_camel(:lower)
+  #   => :myValue
+  #
+  # @param lower [Boolean] If true, the first character will be lowercase
+  # @return [Symbol] The camelized Symbol
+  def to_camel(lower: false)
+    return to_s.to_camel(lower: lower).to_sym
+  end
+
+  # This method will "snakerize" a Symbol
+  #
+  # @example
+  #  :MyTestValue.to_snake
+  #  => :my_test_value
+  #
+  # @return [Symbol] The snakerized Symbol
+  def to_snake
+    return to_s.to_snake.to_sym
+  end
+end
+
 # Additional methods for the Hash class.
 #
 # @see {::Hash} for general documentation about Hash in Ruby.
@@ -47,18 +79,39 @@ class Hash
   #
   # @example
   #   foo = { "myKey": "value", "myKeys": [ "value", "myInnerKey": "value" ] }
+  #   foo.keys2sym
   #   => { my_key: "value", my_keys: [ "value", my_inner_key: "value" ] }
   #
   # @return [Hash] The resulting Hash
   def keys2sym
     keys2sym = lambda do |h|
       case h
-        when Hash  then Hash[ h.map {|k, v| [k.respond_to?(:to_sym) ? k.to_sym : k, keys2sym[v]] } ]
+        when Hash  then Hash[ h.map {|k, v| [k.respond_to?(:to_sym) ? k.to_snake.to_sym : k, keys2sym[v]] }]
         when Array then h.map {|item| keys2sym[item]}
         else h
       end
     end
     keys2sym[self]
+  end
+
+  # This methods takes a Ruby Hash with symbol (using snake notation)
+  # and gives a JSON Hash with camelized String keys.
+  #
+  # @example
+  #   foo = { my_key: "value", my_keys: [ "value", my_inner_key: "value" ] }
+  #   foo.keys2camel
+  #   => #   foo = { "myKey": "value", "myKeys": [ "value", "myInnerKey": "value" ] }
+  #
+  # @return [Hash] The resulting Hash
+  def keys2camel
+    keys2camel = lambda do |h|
+      case h
+        when Hash then Hash[ h.map {|k, v| [k.to_s.to_camel(lower: true), keys2camel[v]] }]
+        when Array then h.map {|item| keys2camel[item]}
+        else h
+      end
+    end
+    keys2camel[self]
   end
 end
 
@@ -70,6 +123,7 @@ class Array
   #
   # @example
   #   foo = [ "value", "myKey": "value" ]
+  #   foo.keys2sym
   #   => [ "value", my_key: "value" ]
   #
   # @return [Array] The resulting Array
@@ -78,7 +132,25 @@ class Array
       case item
         when Hash, Aray then item.keys2sym
         else item
+      end
     end
+  end
+
+  # This methods takes an Array with pairs having symbol for their key (using snake notation)
+  # and gives an Array with camelized String keys.
+  #
+  # @example
+  #   foo = [ "value", my_key: "value" ]
+  #   foo.keys2sym
+  #   => [ "value", "myKey": "value" ]
+  #
+  # @return [Array] The resulting Array
+  def keys2camel
+    self.collect do |item|
+      case item
+        when Hash, Aray then item.keys2camel
+        else item
+      end
     end
   end
 end
