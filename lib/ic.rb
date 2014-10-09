@@ -12,5 +12,8 @@ require 'ic/status'
 require 'ic/message/user_status_message'
 require 'ic/message/async_operation_completed_message'
 
+# This is the top namespace for this gem.
+# 
+# All objects and classes in this gem are member of the top level module {Ic}
 module Ic
 end
