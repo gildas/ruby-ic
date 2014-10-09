@@ -17,14 +17,23 @@ module Ic
 
     # All statuses of a {License}
     module Status
+      # An Unknown error occurred when retrieving license info
       UNKNOWN_ERROR                = 0
+      # No information is available
       NONE                         = 1
+      # The license is available
       AVAILABLE                    = 2
+      # The license not assigned
       NOT_ASSIGNED                 = 3
+      # The license is not available
       UNAVAILABLE                  = 4
+      # The license is used by the same user on another station
       USER_ON_ANOTHER_STATION      = 5
+      # The license is used by the same user on another client machine
       STATION_IN_USE_OTHER_MACHINE = 6
+      # The license is used by another user
       STATION_IN_USE_OTHER_USER    = 7
+      # The license is used by another application
       OTHER_APPLICATION            = 8
     end
 
