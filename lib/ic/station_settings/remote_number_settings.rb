@@ -30,11 +30,9 @@ module Ic
     #
     # By default, the persistence is set to false.
     # 
-    # @param id                     [String]                 The Station identifier
-    # @param media_types            [Array, String, Fixnum]  ([]) contains media type(s), see {MediaType}
-    # @param ready_for_interactions [Boolean]                True if ready to receive interactions
-    # @param persistent             [Boolean]                true for persistent voice path.
-    # @param options                [Hash]                   extra options
+    # See {StationSettings#initialize} for common arguments
+    # @param persistent [Boolean] true for persistent voice path.
+    # @param options    [Hash]    extra options
     # @raise [MissingArgumentError] When id is null.
     def initialize(persistent: false, **options)
       super(**options)

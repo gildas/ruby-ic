@@ -100,10 +100,15 @@ class Hash
   # @example
   #   foo = { my_key: "value", my_keys: [ "value", my_inner_key: "value" ] }
   #   foo.keys2camel
-  #   => #   foo = { "myKey": "value", "myKeys": [ "value", "myInnerKey": "value" ] }
+  #   => { "MyKey": "value", "MyKeys": [ "value", "myInnerKey": "value" ] }
+  #
+  # @example
+  #   foo = { __type: 'urn:acme.com:foo', my_key: "value", my_keys: [ "value", my_inner_key: "value" ] }
+  #   foo.keys2camel(lower: true, except: [ :__type ])
+  #   => { "__type": "urn:acme.com:foo",  "myKey": "value", "myKeys": [ "value", "myInnerKey": "value" ] }
   #
   # @param lower [Boolean] If true, the first character will be lowercase
-  # @param except [Array<Symbol>] Contains symbols that should not be camlized just converted to String
+  # @param except [Array<Symbol>] Contains symbols that should not be camelized just converted to String
   # @return [Hash] The resulting Hash
   def keys2camel(lower: false, except: [])
     keys2camel = lambda do |h|

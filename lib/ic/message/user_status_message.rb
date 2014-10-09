@@ -5,9 +5,9 @@ require 'ic/message'
 module Ic
   # This class implements Messages received from CIC that contains data about User Statuses.
   # @example prints the user's status on stdout as it changes:
-  #  observer = user.subscribe to: session, about: Ic::UserStatusMessage do |message|
+  #  observer = user.subscribe(to: Ic::UserStatusMessage) do |message|
   #    message.statuses.each do |status|
-  #      next unless status.user_id == session.user.id
+  #      next unless status.user.id == session.user.id
   #      puts "Your status is: #{status}, id=#{status.id}, message=#{status.message}, last change=#{status.changed_at}"
   #    end
   #  end
@@ -63,8 +63,8 @@ module Ic
     # @example with only one user:
     #  UserStatusMessage.subscribe(session: session, data: user1)
     #
-    # @param session [Session] The Session
-    # @param data    [Array<User,String>] Contains the users (or their identifier)
+    # @param session [Session]                      The Session
+    # @param data    [Array<Object,#id>,Object,#id] Contains the objects (or their identifier)
     # @raise [MissingSessionError] When the session is missing
     def self.subscribe(session: nil, data: nil)
       raise MissingSessionError if session.nil?
@@ -89,9 +89,8 @@ module Ic
     #
     # @note At the moment, it is not possible to unsubscribe one or a few users only. All subscriptions are canceled.
     #
-    # @param session [Session] The Session
-    # @param users   [Array<User,String>] Contains the users (or their identifier)
-    # @param user    [User,String]        Contains the user (or their identifier)
+    # @param session [Session]                      The Session
+    # @param data    [Array<Object,#id>,Object,#id] Contains the objects (or their identifier)
     # @raise [MissingSessionError] When the session is missing
     def self.unsubscribe(session: nil, data: nil)
       raise MissingSessionError if session.nil?

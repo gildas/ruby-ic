@@ -25,16 +25,16 @@ module Ic
     #
     # This does not create new users in CIC! Use {User.create} for that
     #
-    # @param session [Session] The Session used by this object.
-    # @param id      [String]  The User Identifier
-    # @param display [String]  The USer Display name
-    # @param options [Hash]    Extra options
+    # @param session      [Session] The Session used by this object.
+    # @param id           [String]  The User Identifier
+    # @param display_name [String]  The USer Display name
+    # @param options      [Hash]    Extra options
     # @see Ic::HTTP::Client for HTTP specific options
     # @see Ic::Logger       for Logger specific options
     def initialize(id: nil, session: nil, display_name: nil, **options)
       @session = session
       @id      = id || options[:user_id]
-      @display = display_name || options[:user_display_name]
+      @display = display_name || options[:user_display_name] || @id
       self.create_logger(**options, default: @session)
       logger.add_context(user: @id)
     end

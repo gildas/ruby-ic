@@ -25,11 +25,9 @@ module Ic
 
     # Initializes a RemoteWorkstationSettings
     #
-    # @param id                     [String]                 The Station identifier
-    # @param media_types            [Array, String, Fixnum]  ([]) contains media type(s), see {MediaType}
-    # @param ready_for_interactions [Boolean]                True if ready to receive interactions
-    # @param remote_number          [String]                 The Remote Number for this station
-    # @param options                [Hash]                   extra options
+    # See {StationSettings#initialize} for common arguments
+    # @param remote_number [String] The Remote Number for this station
+    # @param options       [Hash]   extra options
     # @raise [MissingArgumentError] When id is null.
     def initialize(remote_number: nil, **options)
       super(**options)

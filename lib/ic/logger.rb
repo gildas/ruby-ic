@@ -2,9 +2,26 @@ require 'logger'
 require 'time'
 
 module Ic
+  # This interface allows classes to add tracing.
+  #
+  # @example how to add tracing to a class:
+  #  class MyClass
+  #    include Traceable
+  #
+  #    def initialize(arguments, **options)
+  #      @id = 'my_id'
+  #      self.create_logger(log_to: STDOUT, log_level: Logger::DEBUG)
+  #      logger.add_context(topic: @id)
+  #    end
+  #
+  #    def my_method
+  #      trace.info "I am in my method"
+  #      trace.debug('Topic') { "Tracing stuff with a topic" }
+  #    end
+  #  end
   module Traceable
     # @!attribute [rw] logger
-    # @return [Logger] the logger used in this mixin
+    # @return [Logger] the logger
     attr_reader :logger
     attr_writer :logger
     alias_method :trace, :logger
@@ -86,42 +103,67 @@ module Ic
   end
 
   class Formatter < ::Logger::Formatter
+    # Initializes a Formatter
     def initialize
       super
       @contexts = {}
     end
 
+    # Formats tracing data into a String
+    #
+    # @param severity [String]   The trace level
+    # @param time     [Datetime] The Datetime of that trace
+    # @param progname [String]   THe program name
+    # @param message  [String]   The trace message
+    # @return [String] The formatted trace message
     def call(severity, time, progname, message)
       context_items =  @contexts.collect { |context| "#{context.first}:#{context.last}"}
       context_info  = context_items.empty? ? '' : "[#{context_items.join(',')}]"
       "%s [%d][%s]%s %5s: %s\n" % [time.iso8601, $$, progname, context_info, severity, msg2str(message)]
     end
 
+    # Adds contexts to be traced
+    #
+    # @param context [Hash] contextual data
     def add_context(context = {})
       @contexts.merge! context
     end
 
+    # Stop tracing contexts
+    #
+    # @param context [Hash] contextual data
     def remove_context(context)
       @contexts.delete(context)
     end
   end
   private_constant :Formatter
 
+  # An IO class that sends all traces to nowhere
   class NullIO
+    # Writes its arguments to nowhere
     def write(*args) ; end
+    # Closes nothing...
     def close        ; end
   end
   private_constant :NullIO
 
+  # An IO class that sends all traces to several IO
   class MultiIO
+    # Initializes a MultiIO
+    #
+    # @param targets [Array<IO>] List of IO objects
     def initialize(targets = [])
       @targets = targets
     end
 
+    # Writes its arguments to all registered IO objects
+    #
+    # @param args [Array] Arguments to write
     def write(*args)
       @targets.each {|target| target.write(*args)}
     end
 
+    # Closes all registered IO objects
     def close
       @targets.each(&:close)
     end

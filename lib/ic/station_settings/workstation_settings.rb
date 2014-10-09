@@ -22,10 +22,8 @@ module Ic
 
     # Initializes a WorkstationSettings
     #
-    # @param id                     [String]                 The Station identifier
-    # @param media_types            [Array, String, Fixnum]  ([]) contains media type(s), see {MediaType}
-    # @param ready_for_interactions [Boolean]                True if ready to receive interactions
-    # @param options                [Hash]                   extra options
+    # See {StationSettings#initialize} for common arguments
+    # @param options [Hash] extra options
     # @raise [MissingArgumentError] When id is null.
     def initialize(**options)
       super(**options)
