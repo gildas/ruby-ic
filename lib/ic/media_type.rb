@@ -1,16 +1,27 @@
 module Ic
   # This module describes the various media types a {Session} can claim to process
   module MediaType
+    # No media is allowed
     NONE     = 0
+    # Calls are allowed
     CALL     = 1
+    # Web chats are allowed
     CHAT     = 2
+    # Emails are allowed
     EMAIL    = 3
+    # Generic Objects are allowed
     GENERIC  = 4
+    # Callbacks are allowed
     CALLBACK = 5
+    # SMS messages are allowed
     SMS      = 6
+    # Work Items from Interaction Process Automation are allowed
     WORKITEM = 7
 
+    # All media are allowed
     ALL      = [ CALL, CHAT, EMAIL, GENERIC, CALLBACK, SMS, WORKITEM ]
+
+    # By default, calls only are allowed
     DEFAULT  = CALL
 
     # Creates MediaType information from a Hash (typically from JSON)
