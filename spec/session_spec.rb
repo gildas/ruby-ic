@@ -106,7 +106,7 @@ describe Ic::Session do
       begin
         session.station = Ic::WorkstationSettings.new(id: @config[:workstation])
         station = session.station
-        expect(station[:stationSetting]).to be 1
+        expect(station[:station_setting]).to be 1
         expect(station[:id]).to eq @config[:workstation]
       ensure
         session.disconnect
@@ -122,7 +122,7 @@ describe Ic::Session do
       begin
         session.station = Ic::WorkstationSettings.new(id: @config[:workstation], media_types: %w{ call sms })
         station = session.station
-        expect(station[:stationSetting]).to be 1
+        expect(station[:station_setting]).to be 1
         expect(station[:id]).to eq @config[:workstation]
       ensure
         session.disconnect
@@ -138,7 +138,7 @@ describe Ic::Session do
       begin
         session.station = Ic::RemoteWorkstationSettings.new(id: @config[:remotestation])
         station = session.station
-        expect(station[:stationSetting]).to be 2
+        expect(station[:station_setting]).to be 2
         expect(station[:id]).to eq (@config[:remotestation])
       ensure
         session.disconnect
@@ -154,7 +154,7 @@ describe Ic::Session do
       begin
         session.station = Ic::RemoteNumberSettings.new(id: @config[:remotenumber], persistent: @config[:persistent])
         station = session.station
-        expect(station[:stationSetting]).to be 3
+        expect(station[:station_setting]).to be 3
         expect(station[:id]).to eq (@config[:remotenumber])
       ensure
         session.disconnect
@@ -170,7 +170,7 @@ describe Ic::Session do
       begin
         session.station = Ic::WorkstationSettings.new(id: @config[:workstation])
         station = session.station
-        expect(station[:stationSetting]).to be 1
+        expect(station[:station_setting]).to be 1
         expect(station[:id]).to eq @config[:workstation]
         session.station = nil
         expect { session.station }.to raise_error(Ic::StationNotFoundError)

@@ -102,11 +102,13 @@ class Hash
   #   foo.keys2camel
   #   => #   foo = { "myKey": "value", "myKeys": [ "value", "myInnerKey": "value" ] }
   #
+  # @param lower [Boolean] If true, the first character will be lowercase
+  # @param except [Array<Symbol>] Contains symbols that should not be camlized just converted to String
   # @return [Hash] The resulting Hash
-  def keys2camel
+  def keys2camel(lower: false, except: [])
     keys2camel = lambda do |h|
       case h
-        when Hash then Hash[ h.map {|k, v| [k.to_s.to_camel(lower: true), keys2camel[v]] }]
+      when Hash then Hash[ h.map {|k, v| [except.include?(k) ? k.to_s : k.to_s.to_camel(lower: lower), keys2camel[v]] }]
         when Array then h.map {|item| keys2camel[item]}
         else h
       end

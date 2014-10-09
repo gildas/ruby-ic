@@ -33,7 +33,7 @@ module Ic
     # @param options [Hash] Describes the language
     def initialize(options = {})
       @id        = options[:language][:id]
-      @name      = options[:language][:displayName]
+      @name      = options[:language][:display_name]
       @countries = options[:countries].collect {|country_info| Country.new(country_info)} if options[:countries] && !options[:countries].empty?
     end
 

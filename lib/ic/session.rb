@@ -130,17 +130,17 @@ module Ic
         trace.info('Session') { "Connecting application \"#{@application}\" to #{server} as #{@user}" }
         begin
           session_info = http_post server: server, path: @location, data: data
-          raise KeyError, 'sessionId' unless (@id       = session_info[:sessionId])
-          raise KeyError, 'location'  unless (@location = session_info[:location])
-          raise KeyError, 'csrfToken' unless session_info[:csrfToken]
-          @user.display ||= session_info[:userDisplayName]
+          raise KeyError, 'session_id' unless (@id       = session_info[:session_id])
+          raise KeyError, 'location'   unless (@location = session_info[:location])
+          raise KeyError, 'csrf_token' unless session_info[:csrf_token]
+          @user.display ||= session_info[:user_display_name]
           logger.add_context(session: @id)
           trace.info('Session') { "Successfully Connected to Session #{@id}, located at: #{@location}" }
           poll_messages
           return self
         rescue HTTP::WantRedirection => e
           trace.warn('Session') { 'We need to check other servers' }
-          servers = JSON.parse(e.message).keys2sym[:alternateHostList]
+          servers = JSON.parse(e.message).keys2sym[:alternate_host_list]
           trace.info('Session') { "alternate servers: [#{servers.join(', ')}]" }
           server = servers.first
           raise TooManyRedirectionsError if alternate_server_index >= MAX_REDIRECTIONS
@@ -162,7 +162,12 @@ module Ic
       @message_poll_active = false
       @message_thread.join
       trace.debug('Session') { "Disconnecting from #{client.server}" }
-      http_delete path: @location, session: self
+      begin
+        http_delete path: @location, session: self
+      rescue HTTP::UnauthorizedError => e
+        raise InvalidSessionError, self if error[:error_code] == -2147221499
+        raise e
+      end
       trace.info('Session') { "Successfully disconnected from #{client.server}" }
       logger.remove_context(session: @id)
       @id = nil
@@ -202,8 +207,8 @@ module Ic
     def features
       features = @client.get path: "#{@location}/features"
       trace.info('Session') { "Server features: #{features}" }
-      raise ArgumentError, 'featureInfoList' unless features[:featureInfoList]
-      features[:featureInfoList]
+      raise ArgumentError, 'feature_info_list' unless features[:feature_info_list]
+      features[:feature_info_list]
     end
 
     # Queries the CIC Server to know if a feature is licensed ot not
@@ -236,6 +241,8 @@ module Ic
 
     # Queries the CIC Server for the currently connected session.
     #
+    # TODO: We should return a StationSetting object!!!
+    #
     # @return [Hash] A Hash representation of the station
     # @raise [StationNotFoundError] when no station was found
     def station
@@ -243,10 +250,11 @@ module Ic
         trace.debug('Session') { "Querying existing station connection" }
         station = http_get path: "#{@location}/station"
         trace.info('Session') { "Connected Station: #{station}" }
+        # TODO: We should return a StationSetting object!!!
         station
       rescue HTTP::NotFoundError => e
         error = JSON.parse(e.message).keys2sym
-        raise StationNotFoundError if error[:errorId] == '-2147221496'
+        raise StationNotFoundError if error[:error_id] == '-2147221496'
         raise e
       end
     end
@@ -270,7 +278,7 @@ module Ic
           raise KeyError, 'location'  unless (station_info[:location])
         rescue HTTP::NotFoundError => e
           error = JSON.parse(e.message).keys2sym
-          raise StationNotFoundError, station[:workstation] || station[:remoteNumber] if error[:errorId] == '-2147221496'
+          raise StationNotFoundError, station[:workstation] || station[:remote_number] if error[:error_id] == '-2147221496'
           raise e
         end
       end
@@ -284,9 +292,9 @@ module Ic
     def unique_auth_token(seed: '')
       begin
         trace.debug('Session') { 'Requesting a Unique Authentication Token' }
-        token = http_post path: "#{@location}/unique-auth-token", data: { authTokenSeed: seed}, session: self
+        token = http_post path: "#{@location}/unique-auth-token", data: { auth_token_seed: seed}, session: self
         trace.info('Session') { "Unique Authentication Token: #{token}" }
-        token[:authToken]
+        token[:auth_token]
       rescue HTTP::NotFoundError => e
         error = JSON.parse(e.message).keys2sym
         raise StationNotFoundError if error[:errorId] == '-2147221496'
@@ -303,11 +311,11 @@ module Ic
       return if licenses.empty?
       licenses = [ licenses ] unless licenses.respond_to? :collect
       data = {
-          licenseList: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
+          license_list: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
       }
       results = http_post path: "/icws/#{@id}/licenses", data: data
-      raise ArgumentError, 'licenseOperationResultList' unless results[:licenseOperationResultList]
-      results[:licenseOperationResultList].collect { |item| License.new(item.merge(session: self)) }
+      raise ArgumentError, 'license_operation_result_list' unless results[:license_operation_result_list]
+      results[:license_operation_result_list].collect { |item| License.new(item.merge(session: self)) }
     end
 
     # Replaces licenses from the CIC Server
@@ -318,11 +326,11 @@ module Ic
     def replace_licenses(*licenses)
       return if licenses.empty?
       data = {
-          licenseList: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
+          license_list: licenses.collect {|license| license.respond_to?(:id) ? license.id : license }
       }
       results = http_put path: "/icws/#{@id}/licenses", data: data
-      raise ArgumentError, 'licenseOperationResultList' unless results[:licenseOperationResultList]
-      results[:licenseOperationResultList].collect { |item| License.new(item.merge(session: self)) }
+      raise ArgumentError, 'license_operation_result_list' unless results[:license_operation_result_list]
+      results[:license_operation_result_list].collect { |item| License.new(item.merge(session: self)) }
     end
 
     # Releases all licenses from the CIC Server

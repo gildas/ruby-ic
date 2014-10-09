@@ -30,7 +30,7 @@ describe Ic::Message do
           }
         ],
         :isDelta=>false
-      }
+      }.keys2sym
       message = Ic::Message.from_json(data, log_to: @logger)
       expect(message).to be_truthy
       expect(message).to be_kind_of(Ic::UserStatusMessage)

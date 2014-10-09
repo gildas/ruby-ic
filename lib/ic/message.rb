@@ -5,10 +5,10 @@ module Ic
   # This interface describes the various Message objects that can be received from a CIC Server via the subscription mechanism.
   module Message
     # Initializes a new {Message}.
-    # @param isDelta [Boolean] (false) true if this message contains only changed data from a previous {Message}
+    # @param is_delta [Boolean] (false) true if this message contains only changed data from a previous {Message}
     # @param [Hash]            options contains other options we can ignore
-    def initialize(isDelta: false, **options)
-      @is_delta = isDelta
+    def initialize(is_delta: false, **options)
+      @is_delta = is_delta
     end
 
     # Appends member classes of this mixin to an internal list.
@@ -31,7 +31,9 @@ module Ic
     def delta? ;  @is_delta end
 
     # Creates a Hash from the current object.
+    #
     # Mainly used to produced JSON data.
+    #
     # @return [Hash] a Hash representing the current object
     def to_hash
       {

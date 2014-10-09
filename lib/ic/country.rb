@@ -11,12 +11,12 @@ module Ic
 
     # Initializes a new Country
     # @overload initialize(id,name)
-    #   @param id          [String] The country identifier (ISO 3166)
-    #   @param name        [String] A human readable name (e.g.: 'France')
-    #   @param displayName [String] A synonym for parameter name
-    def initialize(id: nil, name: nil, displayName: nil)
+    #   @param id           [String] The country identifier (ISO 3166)
+    #   @param name         [String] A human readable name (e.g.: 'France')
+    #   @param display_name [String] A synonym for parameter name
+    def initialize(id: nil, name: nil, display_name: nil)
       raise MissingArgumentError, 'id' unless (@id = id)
-      @name = name || displayName || @id # IC API key: displayName
+      @name = name || display_name || @id # IC API key: displayName
     end
   end
 end

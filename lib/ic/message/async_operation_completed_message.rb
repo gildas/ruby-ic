@@ -19,14 +19,14 @@ module Ic
     end
 
     # Initializes a new {AsyncOperationCompletedMessage}.
-    # @param requestId [Fixnum] The Request Identifier
-    # @param options   [Hash]   options used by parent classes
+    # @param request_id [Fixnum] The Request Identifier
+    # @param options    [Hash]   options used by parent classes
     # @raise [MissingArgumentError] when the requestId is missing
-    def initialize(requestId: nil, isDelta: false, **options)
-      raise MissingArgumentError, 'requestId' if requestId.nil?
+    def initialize(request_id: nil, **options)
+      raise MissingArgumentError, 'request_id' if request_id.nil?
       self.create_logger(**options)
-      super(isDelta: isDelta, **options)
-      @request_id = requestId
+      super(**options)
+      @request_id = request_id
     end
 
     # Creates an {AsyncOperationCompletedMessage} object from JSON data.
@@ -40,8 +40,8 @@ module Ic
     def self.from_json(json, **options)
       raise MissingArgumentError, '__type'      unless json[:__type]
       raise InvalidTypeError,     json[:__type] unless json[:__type] == self.urn_type
-      raise MissingArgumentError, 'requestId'   unless json[:requestId]
-      self.new(requestId: json[:requestId], isDelta: json[:isDelta], **options)
+      raise MissingArgumentError, 'request_id'   unless json[:request_id]
+      self.new(request_id: json[:request_id], is_delta: json[:is_delta], **options)
     end
 
     # Gives a String representation of this object

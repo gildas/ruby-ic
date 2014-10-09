@@ -58,7 +58,7 @@ module Ic
       session.trace.debug('Status') { "Requesting list of statuses, options=#{options}" }
       info = session.http_get path: "/icws/#{session.id}/status/status-messages"
       session.trace.info('Status') { "Statuses: #{info}" }
-      info[:statusMessageList].collect { |item| Status.new(item.merge(session: session)) }
+      info[:status_message_list].collect { |item| Status.new(item.merge(session: session)) }
     end
 
     # Collects all Status Messages Identifier from a CIC server
@@ -69,19 +69,19 @@ module Ic
     # @param options [Hash]    Extra options
     # @option options [String] user (nil) The user filter
     # @return [Array<Status>]  list of retrieved statuses
-    def self.find_all_ids(session: nil, **options)
+    def self.find_all_ids(session: nil, user: nil, **options)
       raise MissingArgumentError, 'session' if session.nil?
-      if options[:user]
+      if !user.nil?
         session.trace.debug('Status') { "Requesting the list of status ids for user #{options[:user]}" }
-        user_id = options[:user].respond_to?(:id) ? options[:user].id : options[:user]
+        user_id = user.respond_to?(:id) ? user.id : user
         info = session.http_get path: "/icws/#{session.id}/status/status-messages-user-access/#{user_id}"
         session.trace.info('Status') { "Statuses: #{info}" }
-        info[:statusMessages]
+        info[:status_messages]
       else
         session.trace.debug('Status') { "Requesting list of status ids, options=#{options}" }
         info = session.http_get path: "/icws/#{session.id}/status/status-messages"
         session.trace.info('Status') { "Statuses: #{info}" }
-        info[:statusMessageList].collect { |item| item[:statusId] }
+        info[:status_message_list].collect { |item| item[:statusId] }
       end
     end
 
@@ -90,29 +90,29 @@ module Ic
     # @param options [Hash] 
     def initialize(**options)
       self.create_logger(**options)
-      @can_have_date   = options.include?(:canHaveDate) ? options[:canHaveDate] : false
-      @can_have_time   = options.include?(:canHaveTime) ? options[:canHaveTime] : false
-      @group_tag       = options[:groupTag]
-      @acd             = options.include?(:isAcdStatus) ? options[:isAcdStatus] : false
-      @after_call_work = options.include?(:isAfterCallWorkStatus) ? options[:isAfterCallWorkStatus] : false
-      @allow_follow_up = options.include?(:isAllowFollowUpStatus) ? options[:isAllowFollowUpStatus] : false
-      @do_not_disturb  = options.include?(:isDoNotDisturbStatus) ? options[:isDoNotDisturbStatus] : false
-      @forward         = options.include?(:isForwardStatus) ? options[:isForwardStatus] : false
-      @persistent      = options.include?(:isPersistentStatus) ? options[:isPersistentStatus] : false
-      @selectable      = options.include?(:isSelectableStatus) ? options[:isSelectableStatus] : false
-      @id              = options[:statusId]
-      @system_id       = options[:systemId]
-      @icon_uri        = options[:iconUri]
-      @message         = options[:messageText]
-      @changed_at      = DateTime.parse(options[:statusChanged]) if options.include?(:statusChanged)
-      @logged_in       = options.include?(:loggedIn) ? options[:loggedIn] : false
-      @on_phone        = options.include?(:onPhone) ? options[:onPhone] : false
-      @on_phone_at     = DateTime.parse(options[:onPhoneChanged]) if options.include?(:onPhoneChanged)
+      @can_have_date   = options.include?(:can_have_date) ? options[:can_have_date] : false
+      @can_have_time   = options.include?(:can_have_time) ? options[:can_have_time] : false
+      @group_tag       = options[:group_tag]
+      @acd             = options.include?(:is_acd_status) ? options[:is_acd_status] : false
+      @after_call_work = options.include?(:is_after_call_work_status) ? options[:is_after_call_work_status] : false
+      @allow_follow_up = options.include?(:is_allow_follow_up_status) ? options[:is_allow_follow_up_status] : false
+      @do_not_disturb  = options.include?(:is_do_not_disturb_status) ? options[:is_do_not_disturb_status] : false
+      @forward         = options.include?(:is_forward_status) ? options[:is_forward_status] : false
+      @persistent      = options.include?(:is_persistent_status) ? options[:is_persistent_status] : false
+      @selectable      = options.include?(:is_selectable_status) ? options[:is_selectable_status] : false
+      @id              = options[:status_id]
+      @system_id       = options[:system_id]
+      @icon_uri        = options[:icon_uri]
+      @message         = options[:message_text]
+      @changed_at      = DateTime.parse(options[:status_changed]) if options.include?(:status_changed)
+      @logged_in       = options.include?(:logged_in) ? options[:logged_in] : false
+      @on_phone        = options.include?(:on_phone) ? options[:on_phone] : false
+      @on_phone_at     = DateTime.parse(options[:on_phone_changed]) if options.include?(:on_phone_changed)
       @notes           = options[:notes] || ''
-      @forward_to      = options[:forwardNumber]
+      @forward_to      = options[:forward_number]
       @until           = DateTime.parse(options[:until]) if options.include?(:until)
       @stations        = options[:stations] || []
-      @servers         = options[:icServers] || []
+      @servers         = options[:ic_servers] || []
       @session         = options[:session]
       if (options[:user])
         @user      = options[:user]

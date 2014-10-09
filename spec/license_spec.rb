@@ -16,7 +16,7 @@ describe Ic::License do
       licenses = @session.acquire_licenses(licenses: 'I3_ACCESS_CLIENT')
       expect(licenses).to be_truthy
       expect(licenses.size).to be >= 1
-      expect(licenses.find {|license| license.id == 'I3_ACCESS_CLIENT'}).to be_truthy
+      expect(licenses.find {|license| license.name == 'I3_ACCESS_CLIENT'}).to be_truthy
     ensure
       @session.disconnect
       expect(@session.connected?).to be false

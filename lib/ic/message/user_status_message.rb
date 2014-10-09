@@ -26,13 +26,13 @@ module Ic
     end
 
     # Initializes a new {UserStatusMessage}.
-    # @param userStatusList [Array<String>] List of Status identifiers
-    # @param options        [Hash]          options used by parent classes
-    def initialize(userStatusList: [], isDelta: false, **options)
+    # @param status_ids [Array<String>] List of Status identifiers
+    # @param options  [Hash]          options used by parent classes
+    def initialize(status_ids: [], **options)
       self.create_logger(**options)
-      super(isDelta: isDelta, **options)
-      trace.debug('message') { "Contains #{userStatusList.size} statuses" }
-      @statuses = userStatusList.collect {|item| Status.new(item.merge(log_to: logger))}
+      super(**options)
+      trace.debug('message') { "Contains #{status_ids.size} statuses" }
+      @statuses = status_ids.collect {|item| Status.new(item.merge(log_to: logger))}
     end
 
     # Creates an {UserStatusMessage} object from JSON data.
@@ -46,8 +46,8 @@ module Ic
     def self.from_json(json, **options)
       raise MissingArgumentError, '__type'         unless json[:__type]
       raise InvalidTypeError,     json[:__type]    unless json[:__type] == self.urn_type
-      raise MissingArgumentError, 'userStatusList' unless json[:userStatusList]
-      self.new(userStatusList: json[:userStatusList], isDelta: json[:isDelta], **options)
+      raise MissingArgumentError, 'user_status_list' unless json[:user_status_list]
+      self.new(status_ids: json[:user_status_list], is_delta: json[:is_delta], **options)
     end
 
     # Gives a String representation of this object

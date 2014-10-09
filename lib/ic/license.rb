@@ -9,8 +9,8 @@ module Ic
   class License
     include Traceable
 
-    # @return [String] The license identifier
-    attr_reader :id
+    # @return [String] The license name
+    attr_reader :name
 
     # @return [Status] The license status.
     attr_reader :status
@@ -38,28 +38,34 @@ module Ic
     end
 
     # Initializes a License
-    # @param id [String] The Identifier of the License
-    # @param licenseName [String] The Identifier of the License (when returned from CIC)
-    # @param status [String] The current status of the license
-    # @param licenseStatus [String] The current status of the license (when returned from CIC)
+    # @param license_name   [String]  The name of the License
+    # @param license_status [String]  The current status of the license
+    # @param is_available   [Boolean] True if the license is available (for acquisition)
     # @raise [MissingArgumentError] if id and licenseName are nil
     #                               if status and licenseStatus are nil
-    def initialize(session: session, id: nil, licenseName: nil, status: nil, licenseStatus: nil, **options)
+    def initialize(session: session, license_name: nil, license_status: nil, is_available: false, **options)
       self.create_logger(**options, default: @session)
-      raise MissingArgumentError, 'id'     unless (@id     = id || licenseName)
-      raise MissingArgumentError, 'status' unless (@status = status || licenseStatus)
-      if options.include?(:available)
-        @available = options[:available]
-      elsif options.include?(:isAvailable)
-        @available = options[:isAvailable]
-      else
-        @available = false
-      end
+      raise MissingArgumentError, 'license_name'   unless (@name   = license_name)
+      raise MissingArgumentError, 'license_status' unless (@status = license_status)
+      @available     = is_available
+      @error_details = options[:error_details] || 'none'
       # TODO: Add processing for :errorDetails (which has the value of " none" upon success)
     end
 
     # @return [Boolean] Tells if a {License}  is available or not.
     def available? ; @available end
 
+    # Creates a Hash from the current object.
+    #
+    # Mainly used to produced JSON data.
+    #
+    # @return [Hash] a Hash representing the current object
+    def to_hash
+      {
+        license_name:   @name,
+        license_status: @status,
+        is_available:   @available
+      }
+    end
   end
 end

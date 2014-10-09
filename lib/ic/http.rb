@@ -120,8 +120,8 @@ module Ic
       #
       # @param verb    [Symbol]   one of :get, :post, :delete, :put
       # @param path    [String]   the URL to send the request to
-      # @param data    [#to_json] an object that can ben JSONified
-      # @param options [Hash]     optional arguments
+      # @param data    [#to_json] an object that can be JSONified (#keys2camel)
+      # @param options [Hash]     optional arguments (with snakerized keys)
       # @option options [String] :server   (nil)     to use another server for this request
       # @option options [String] :language ('en-us') @see initialize
       # @option options [String] :token    (nil)     token received on successful connection
@@ -136,7 +136,6 @@ module Ic
       # @raise [UnauthorizedError] when the provided credentials are not authorized on the server
       # @raise [NotFoundError] when the requested resource does not exist on the server
       # @raise [BadRequestError] when the request was badly formed
-      # @raise [SessionIdExpectedError] when the {Session} is not provided
       # @raise [InvalidSessionIdError] when the provided {Session} was invalid
       # @raise [AuthTokenExpectedError] when no token were provided
       # @raise [RuntimeError] when the server experienced an unknown problem
@@ -156,9 +155,12 @@ module Ic
         if data
           raise InvalidArgumentError, 'data does not respond to to_json' unless data.respond_to? :to_json
           headers['Content-Type'] = 'application/json'
-          body = data.to_json
-          object_id = data.id      if data.respond_to? :id
-          session   = data.session if data.respond_to?(:session) && data.session
+          if data.respond_to? :keys2camel
+            body = data.keys2camel(lower: true, except: [:__type]).to_json
+          else
+            body = data.to_json
+          end
+          object_id = data.id if data.respond_to? :id
         end
         trace.info('HTTP')  { "Sending #{verb} request to #{url}" }
         trace.debug('HTTP') { "  SSL verify mode: #{@client.ssl_config.verify_mode}" }
@@ -179,8 +181,8 @@ module Ic
           # {"alternateHostList":["otherserver"],"errorId":"error.server.notAcceptingConnections","message":"This Session Manager is not currently accepting connections."}
           trace.warn('HTTP') { 'Host wants us to redirect' }
           data = JSON.parse(response.content).keys2sym
-          raise HTTP::UnavailableService, data.to_json unless data[:errorId] == 'error.server.notAcceptingConnections'
-          raise KeyError, 'alternateHostList'          unless data[:alternateHostList]
+          raise HTTP::UnavailableService, data.to_json unless data[:error_id] == 'error.server.notAcceptingConnections'
+          raise KeyError, 'alternate_host_list'          unless data[:alternate_host_list]
           raise HTTP::WantRedirection, data.to_json
         elsif response.ok?
           data = {}
@@ -192,37 +194,34 @@ module Ic
               when Array then data[:values] = content.keys2sym
               else raise InvalidArgumentError, 'content'
             end
-            @token = data[:csrfToken] if data[:csrfToken]
-            trace.debug('HTTP') { "Token?: #{data[:csrfToken]}, Content: #{response.content.size} Bytes of type #{data[:content_type]}"}
+            trace.debug('HTTP') { "Data: #{data.inspect}" }
+            @token = data[:csrf_token] if data[:csrf_token]
+            trace.debug('HTTP') { "Token?: #{data[:csrf_token]}, Content: #{response.content.size} Bytes of type #{data[:content_type]}"}
           end
           data[:location] = response.header['Location'].first if response.header['Location'] && !response.header['Location'].empty?
           trace.debug('HTTP') { "location?: #{data[:location]}"}
           return data
         else
           trace.error('HTTP') { "HTTP Failure: #{response.status} #{response.reason}" }
-          error = { session: session, id: object_id }
+          error = { id: object_id }
           error.merge!(JSON.parse(response.content).keys2sym) if response.content.size > 0
-          trace.error('HTTP') { "ICWS Failure: session=#{error[:session]}, id=#{error[:errorId]}, code=#{error[:errorCode]}, message=\"#{error[:message]}\"" }
+          trace.error('HTTP') { "ICWS Failure: session=#{error[:session]}, id=#{error[:error_id]}, code=#{error[:error_code]}, message=\"#{error[:message]}\"" }
           case response.status
             when HTTP::Status::BAD_REQUEST
               # The response can be something like:
               #   {"errorId":"error.request.connection.authenticationFailure","errorCode":-2147221503,"message":"The authentication process failed."}
-              raise HTTP::AuthenticationError          if error[:errorId]   == 'error.request.connection.authenticationFailure'
-              raise HTTP::AuthenticationError          if error[:errorCode] == -2147221503 # There was no errorId in CIC < 4.0.6
-              raise HTTP::NotFoundError, error.to_json if error[:errorId]   == '-2147221496'
+              raise HTTP::AuthenticationError          if error[:error_id]   == 'error.request.connection.authenticationFailure'
+              raise HTTP::AuthenticationError          if error[:error_code] == -2147221503 # There was no errorId in CIC < 4.0.6
+              raise HTTP::NotFoundError, error.to_json if error[:error_id]   == '-2147221496'
               raise HTTP::BadRequestError, response
             when HTTP::Status::UNAUTHORIZED
-              raise SessionIdExpectedError              if error[:errorCode] == 1
-              raise AuthTokenExpectedError              if error[:errorCode] == 2
-              if error[:errorCode] == -2147221499
-                raise InvalidSessionIdError, session.id   if session.respond_to? :id
-                raise InvalidSessionIdError
-              end
+              raise SessionIdExpectedError              if error[:error_code] == 1
+              raise AuthTokenExpectedError              if error[:error_code] == 2
               raise HTTP::UnauthorizedError, error.to_json
             when HTTP::Status::NOT_FOUND
               raise HTTP::NotFoundError, error.to_json
             when HTTP::Status::INTERNAL
-              raise RuntimeError if error[:errorCode] == -2147467259
+              raise RuntimeError if error[:error_code] == -2147467259
               raise RuntimeError, error.to_json
             else
               raise HTTP::HTTPError, error.to_json

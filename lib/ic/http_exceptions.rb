@@ -27,9 +27,6 @@ module Ic
     # This Exception is raised when the {Client} did not provide a token in its request
     class AuthTokenExpectedError < UnauthorizedError ; end
 
-    # This Exception is raised when the {Client} used an invalid {Session}
-    class InvalidSessionIdError < UnauthorizedError ; end
-
     # This Exception is raised when the {Client} received too many redirection requests
     class TooManyRedirectionsError < HTTPError ; end
   end
