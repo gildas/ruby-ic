@@ -6,31 +6,56 @@ require 'ic/status'
 require 'ic/subscriber'
 
 module Ic
+  # This class represents a CIC User
+  # 
+  # It can be used for User in Session, Queues, etc. as well as to perform administrative tasks
+  # such as create a new User, Change their attributes or group membership, etc...
   class User
     include Traceable
     include Subscriber
     include HTTP::Requestor
 
-    attr_reader :id, :display
+    # @return [String] The User Identifier
+    attr_reader :id
+
+    # #return [String] The User Display name
+    attr_reader :display
     attr_writer :display
 
-    def initialize(**options)
-      @session    = options[:session]
+    # Initializes a new User instance
+    #
+    # This does not create new users in CIC! Use {User.create} for that
+    #
+    # @param session [Session] The Session used by this object.
+    # @param id      [String]  The User Identifier
+    # @param display [String]  The USer Display name
+    # @param options [Hash]    Extra options
+    # @see Ic::HTTP::Client for HTTP specific options
+    # @see Ic::Logger       for Logger specific options
+    # @raise [MissingArgumentError] when the session is missing
+    def initialize(id: nil, session: nil, **options)
+      raise MissingArgumentError, 'session'     unless (@session = session)
       self.create_logger(**options, default: @session)
-      @id         = options[:id] || @session.user.id
-      @display    = options[:display] || @id
+      @id         = id || @session.user.id
+      @display    = display || @id
       self.client = @session.client
       logger.add_context(user: @id)
     end
 
+    # Queries the CIC Server for the User's Status
+    #
+    # @return [Status] the retrieved Status
     def status
       trace.debug('User') { 'Requesting the current status' }
       info = http_get path: "/icws/#{@session.id}/status/user-statuses/#{@id}"
       trace.info('User') { "Status: #{info}" }
       info[:session] = @session
-      Status.new(info)
+      Status.new(info.merge(user: self))
     end
 
+    # Sets the User's Status on the CIC Server
+    #
+    # @param options [Hash] Status parameters
     def status=(options = {})
       options = { status: options } if options.kind_of?(String) || options.kind_of?(Status)
       raise MissingArgumentError, 'status' unless options[:status]
@@ -96,6 +121,9 @@ module Ic
       end
     end
 
+    # String representation of a Session
+    #
+    # @return [String] String representation
     def to_s
       @id
     end
