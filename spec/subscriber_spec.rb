@@ -30,10 +30,10 @@ describe Ic::Subscriber do
       @logger.info('Example') { @logger.banner(example.description) }
       mutex = Mutex.new
       status_updated = ConditionVariable.new
-      @session.user.subscribe to: @session, about: Ic::UserStatusMessage do |message|
+      @session.user.subscribe(to: Ic::UserStatusMessage) do |message|
         @logger.info('observer') { "Got #{message.statuses.size} status(es)"}
         message.statuses.each do |status|
-          @logger.info('observer') { "Status for #{status.user_id}: #{status}"}
+          @logger.info('observer') { "Status for #{status.user}: #{status}"}
           next unless status.user_id == @session.user.id
           if status.id == 'Do Not disturb'
             @logger.debug('observer') { 'Found the expected status'}
@@ -52,7 +52,7 @@ describe Ic::Subscriber do
       new_status = @session.user.status
       expect(new_status).to be_truthy
       expect(new_status.id).to eq 'Do Not disturb'
-      @session.user.unsubscribe from: @session
+      @session.user.unsubscribe(from: Ic::UserStatusMessage)
     end
   end
 end

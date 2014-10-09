@@ -11,6 +11,7 @@ describe Ic::Status do
   end
 
   after(:context) do
+    expect(@session).to be_truthy
     @session.disconnect
     expect(@session.connected?).to be false
     @logger.close

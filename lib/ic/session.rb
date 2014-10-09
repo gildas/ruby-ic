@@ -14,7 +14,6 @@ module Ic
   class Session
     include Observable
     include Traceable
-    include HTTP::Requestor
 
     # Maximum redirections allowed to alternate CIC servers
     MAX_REDIRECTIONS = 5
@@ -36,9 +35,6 @@ module Ic
 
     # @return [Server] The CIC Server
     attr_reader :server
-
-    # @return [HTTP::Client] The {HTTP::Client} that communicates with the CIC Server
-    attr_reader :client
 
     # Class method that initializes a session and connects it to a CIC Server
     #
@@ -95,7 +91,7 @@ module Ic
       self.create_logger(**options)
       @application            = application || options[:application] || DEFAULT_APPLICATION
       @server                 = server || options[:server] || 'localhost'
-      self.client             = Ic::HTTP::Client.new(server: @server, log_to: logger, **options)
+      @client                 = Ic::HTTP::Client.new(server: @server, log_to: logger, **options)
       @id                     = nil
       @location               = '/icws/connection'
       @user                   = User.new(session: self, id: user)
@@ -103,6 +99,53 @@ module Ic
       @message_thread         = nil
       @message_poll_active    = false
       trace.debug('Session') { "Server: \"#{server}\", options: #{options[:server]} => @server: \"#{@server}\"" }
+    end
+
+    # Performs an HTTP GET request
+    # @param (see #Ic::HTTP::Client::get)
+    def http_get(path: '/', data: nil, **options)
+      begin
+        @client.get(path: path, data: data, **options)
+      rescue HTTP::UnauthorizedError => e
+        raise InvalidSessionError, self if error[:error_code] == -2147221499
+        raise e
+      end
+    end
+
+    # Performs an HTTP POST request
+    # @param (see #Client::post)
+    # @raise [InvalidSessionError] When the Session is invalid
+    def http_post(path: '/', data: nil, **options)
+      begin
+        @client.post(path: path, data: data, **options)
+      rescue HTTP::UnauthorizedError => e
+        raise InvalidSessionError, self if error[:error_code] == -2147221499
+        raise e
+      end
+    end
+
+    # Performs an HTTP DELETE request
+    # @param (see #Client::delete)
+    # @raise [InvalidSessionError] When the Session is invalid
+    def http_delete(path: '/', data: nil, **options)
+      begin
+        @client.delete(path: path, data: data, **options)
+      rescue HTTP::UnauthorizedError => e
+        raise InvalidSessionError, self if error[:error_code] == -2147221499
+        raise e
+      end
+    end
+
+    # Performs an HTTP PULL request
+    # @param (see #Client::pull)
+    # @raise [InvalidSessionError] When the Session is invalid
+    def http_put(path: '/', data: nil, **options)
+      begin
+        @client.put(path: path, data: data, **options)
+      rescue HTTP::UnauthorizedError => e
+        raise InvalidSessionError, self if error[:error_code] == -2147221499
+        raise e
+      end
     end
 
     # Connects to the CIC Server that was given during {#initialize}
@@ -125,7 +168,7 @@ module Ic
         password:        @password,
       }
       alternate_server_index = 0
-      server = client.server
+      server = @client.server
       loop do
         trace.info('Session') { "Connecting application \"#{@application}\" to #{server} as #{@user}" }
         begin
@@ -161,14 +204,9 @@ module Ic
       trace.info('messages') { "Stopping Message polling" }
       @message_poll_active = false
       @message_thread.join
-      trace.debug('Session') { "Disconnecting from #{client.server}" }
-      begin
-        http_delete path: @location, session: self
-      rescue HTTP::UnauthorizedError => e
-        raise InvalidSessionError, self if error[:error_code] == -2147221499
-        raise e
-      end
-      trace.info('Session') { "Successfully disconnected from #{client.server}" }
+      trace.debug('Session') { "Disconnecting from #{@client.server}" }
+      http_delete path: @location, session: self
+      trace.info('Session') { "Successfully disconnected from #{@client.server}" }
       logger.remove_context(session: @id)
       @id = nil
       self
@@ -369,7 +407,7 @@ module Ic
                 trace.debug('messages') { "Received data: #{value}"}
                 message = Message.from_json(value)
                 trace.debug('messages') { "Received message: #{message}"}
-                notify_observers(message: message)
+                notify_observers(message)
               end
             end
           end

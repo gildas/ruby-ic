@@ -5,6 +5,7 @@ module Ic
   module Subscriber
 
     # Subscribes to an Observable object for updates on a {Message} type.
+    #
     # @param to      [Observable] an Observable object
     # @param about   [Message]    the type of {Message}
     # @param options [Hash]       options

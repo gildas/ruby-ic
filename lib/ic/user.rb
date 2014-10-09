@@ -13,7 +13,6 @@ module Ic
   class User
     include Traceable
     include Subscriber
-    include HTTP::Requestor
 
     # @return [String] The User Identifier
     attr_reader :id
@@ -34,10 +33,9 @@ module Ic
     # @see Ic::Logger       for Logger specific options
     def initialize(id: nil, session: nil, display_name: nil, **options)
       @session = session
+      @id      = id || options[:user_id]
+      @display = display_name || options[:user_display_name]
       self.create_logger(**options, default: @session)
-      @id         = id || options[:user_id]
-      @display    = display_name || options[:user_display_name]
-      self.client = @session.client unless @session.nil?
       logger.add_context(user: @id)
     end
 
@@ -48,7 +46,7 @@ module Ic
     def status
       raise MissingSessionError unless @session
       trace.debug('User') { 'Requesting the current status' }
-      info = http_get path: "/icws/#{@session.id}/status/user-statuses/#{@id}"
+      info = @session.http_get path: "/icws/#{@session.id}/status/user-statuses/#{@id}"
       trace.info('User') { "Status: #{info}" }
       info[:session] = @session
       Status.new(info.merge(user: self))
@@ -81,27 +79,25 @@ module Ic
       data[:forwardNumber] = options[:forward_to] if options.include?(:forward_to)
       data[:notes]         = options[:notes]      if options.include?(:notes)
       trace.debug('User') { "Setting the status to #{data[:statusId]}" }
-      info = http_put path: "/icws/#{@session.id}/status/user-statuses/#{@id}", data: data
+      info = @session.http_put path: "/icws/#{@session.id}/status/user-statuses/#{@id}", data: data
       trace.info('User') { "Status: #{info}" }
       info[:requestId]
     end
 
-    # Subscribes to an Observable object for updates on a {Message} type.
+    # Subscribes to a {Message} on the current {Session}
     #
-    # @param to      [Observable] an Observable object
-    # @param about   [Message]    the type of {Message}
+    # @param to      [Message]    the type of {Message}
     # @param options [Hash]       options
     # @param block   [Code]       Code to execute when the Observable notifies this
     # @raise [MissingSessionError] when the session is missing
-    def subscribe(to: nil, about: nil, **options, &block)
-      raise MissingSessionError unless @session
-      trace.info('subscribe') { "Subscribing to Observable: #{to}"}
+    def subscribe(to: nil, **options, &block)
+      raise MissingArgumentError, 'to' if to.nil?
+      trace.info('subscribe') { "Subscribing user #{self} to message #{to} on session #{@session}"}
       #super.subscribe(to: to, about: about, **options, &block)
-      @update_about = about
+      @update_about = to
       @update_block = block
-      to.add_observer(self)
-      data = { userIds: [ @id ] }
-      to.http_put path: "/icws/#{to.id}/messaging/subscriptions/status/user-statuses", data: data
+      @session.add_observer(self)
+      to.subscribe(session: @session, user: self)
     end
 
     # Unsubscribe from an Observable object
@@ -109,13 +105,11 @@ module Ic
     # @param from [Observable] an Observable object
     # @raise [MissingSessionError] when the session is missing
     def unsubscribe(from: nil)
-      raise MissingSessionError unless @session
-      trace.info('subscribe') { "Unsubscribing from Observable: #{from}"}
+      trace.info('subscribe') { "Unsubscribing user #{self} from message #{from} on session #{@session}"}
       #super.unsubscribe(from: from)
-      from.delete_observer(self)
+      @session.delete_observer(self)
       @update_about = @update_block = nil
-      from.http_delete path: "/icws/#{from.id}/messaging/subscriptions/status/user-statuses"
-      #TODO: shouldn't we use a put with a data with current user_ids minus the one we want to stop observe?
+      from.unsubscribe(session: @session, user: self)
     end
 
     # Called by the Observable object when it changes
@@ -123,7 +117,7 @@ module Ic
     # @param message [Hash] parameters given by the Observable
     # @raise [MissingArgumentError] when the message is missing
     # @raise [InvalidArgumentError] when the message is invalid
-    def update(message: nil)
+    def update(message)
       trace.debug('subscribe') { "Received message: #{message}" }
       raise MissingArgumentError, 'message' if message.nil?
       raise InvalidArgumentError, 'message' unless message.kind_of? Message

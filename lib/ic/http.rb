@@ -7,44 +7,6 @@ require 'ic/logger'
 module Ic
   # This module handles HTTP/HTTPS Client connections to a CIC Server via the ICWS API.
   module HTTP
-    # This interface allows classes to have a direct access to their client connection object.
-    # @example: Here is how to use the client:
-    #   class Session
-    #     include HTTP::Requestor
-    #     ...
-    #     def initialize(server, ...)
-    #       self.client = Ic::HTTP::Client.new(server: server)
-    #     end
-    #
-    #     def blah
-    #       http_get path: '/somewhere', data: { key: "value" }
-    #     end
-    #     ...
-    #   end
-    module Requestor
-
-      # @!attribute [rw] client
-      #   @return [Client] the current Client
-      attr_reader :client
-      attr_writer :client
-
-      # Performs an HTTP GET request
-      # @param (see #Ic::HTTP::Client::get)
-      def http_get(path: '/', data: nil, **options)    ;  @client.get(path: path, data: data, **options) end
-
-      # Performs an HTTP POST request
-      # @param (see #Client::post)
-      def http_post(path: '/', data: nil, **options)   ;  @client.post(path: path, data: data, **options) end
-
-      # Performs an HTTP DELETE request
-      # @param (see #Client::delete)
-      def http_delete(path: '/', data: nil, **options) ;  @client.delete(path: path, data: data, **options) end
-
-      # Performs an HTTP PULL request
-      # @param (see #Client::pull)
-      def http_put(path: '/', data: nil, **options)    ;  @client.put(path: path, data: data, **options) end
-    end
-
     # The HTTP/HTTPS Client Connection to a CIC Server
     class Client
       include Traceable

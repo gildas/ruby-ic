@@ -50,6 +50,62 @@ module Ic
       self.new(status_ids: json[:user_status_list], is_delta: json[:is_delta], **options)
     end
 
+    # Susbcribe to a {Session} for updates about a user or some users.
+    #
+    # The user or users can be given as User or their string identifiers.
+    #
+    # If no users are given, no subscription is sent to CIC.
+    #
+    # @example
+    #   UserStatusMessage.subscribe(session: session, users: [ 'cicadmin', user1, user2 ])
+    #
+    # @example with only one user:
+    #  UserStatusMessage.subscribe(session: session, user: user1)
+    #
+    # @note if both :user and :users are given, they are merged.
+    #
+    # @param session [Session] The Session
+    # @param users   [Array<User,String>] Contains the users (or their identifier)
+    # @param user    [User,String]        Contains the user (or their identifier)
+    # @raise [MissingSessionError] When the session is missing
+    def self.subscribe(session: nil, user: nil, users: [])
+      raise MissingSessionError if session.nil?
+      users.push(user) if user
+      return if users.empty?
+      data = { userIds: users.collect {|user| user.respond_to?(:id) ? user.id : user } }
+      session.http_put path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses", data: data
+    end
+
+    # Unsubscribe from a {Session} for updates about a user or some users.
+    #
+    # The user or users can be given as User or their string identifiers.
+    #
+    # If no users are given, all currently active subscriptions are canceled from CIC.
+    #
+    # @example
+    #   UserStatusMessage.unsubscribe(session: session, users: [ 'cicadmin', user1, user2 ])
+    #
+    # @example with only one user:
+    #  UserStatusMessage.unsubscribe(session: session, user: user1)
+    #
+    # @note if both :user and :users are given, they are merged.
+    # @note At the moment, it is not possible to unsubscribe one or a few users only. All subscriptions are canceled.
+    #
+    # @param session [Session] The Session
+    # @param users   [Array<User,String>] Contains the users (or their identifier)
+    # @param user    [User,String]        Contains the user (or their identifier)
+    # @raise [MissingSessionError] When the session is missing
+    def self.unsubscribe(session: nil, user: nil, users: [])
+      raise MissingSessionError if session.nil?
+      users.push(user) if user
+      if users.empty?
+        session.http_delete path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses"
+      else
+        #TODO: We need to unsubscribe only the given User list!!!
+        session.http_delete path: "/icws/#{session.id}/messaging/subscriptions/status/user-statuses"
+      end
+    end
+
     # Gives a String representation of this object
     # @return [String] the String representation of this object
     def to_s
