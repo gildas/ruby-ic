@@ -95,7 +95,8 @@ module Ic
       # @raise [KeyError] when the server does not provide an alternate list of servers when redirecting
       # @raise [WantRedirection] when the server wants the Client to change servers
       # @raise [AuthenticationError] when the provided credentials do not authenticate with the server
-      # @raise [UnauthorizedError] when the provided credentials are not authorized on the server
+      # @raise [AuthorizationError] when the provided credentials are not authorized on the server
+      # @raise [RequestDeniedError ] when the server denied a request from the client (permission issues)
       # @raise [NotFoundError] when the requested resource does not exist on the server
       # @raise [BadRequestError] when the request was badly formed
       # @raise [InvalidSessionIdError] when the provided {Session} was invalid
@@ -115,14 +116,22 @@ module Ic
         body      = nil
         object_id = nil
         if data
-          raise InvalidArgumentError, 'data does not respond to to_json' unless data.respond_to? :to_json
-          headers['Content-Type'] = 'application/json'
-          if data.respond_to? :keys2camel
-            body = data.keys2camel(lower: true, except: [:__type]).to_json
-          else
-            body = data.to_json
-          end
           object_id = data.id if data.respond_to? :id
+          if verb == :get
+            if data.respond_to? :keys2camel
+              body = data.keys2camel(lower: true, except: [:__type])
+            else
+              body = data
+            end
+          else
+            raise InvalidArgumentError, 'data does not respond to to_json' unless data.respond_to? :to_json
+            headers['Content-Type'] = 'application/json'
+            if data.respond_to? :keys2camel
+              body = data.keys2camel(lower: true, except: [:__type]).to_json
+            else
+              body = data.to_json
+            end
+          end
         end
         trace.info('HTTP')  { "Sending #{verb} request to #{url}" }
         trace.debug('HTTP') { "  SSL verify mode: #{@client.ssl_config.verify_mode}" }
@@ -172,21 +181,23 @@ module Ic
             when HTTP::Status::BAD_REQUEST
               # The response can be something like:
               #   {"errorId":"error.request.connection.authenticationFailure","errorCode":-2147221503,"message":"The authentication process failed."}
-              raise HTTP::AuthenticationError          if error[:error_id]   == 'error.request.connection.authenticationFailure'
-              raise HTTP::AuthenticationError          if error[:error_code] == -2147221503 # There was no errorId in CIC < 4.0.6
-              raise HTTP::NotFoundError, error.to_json if error[:error_id]   == '-2147221496'
+              raise HTTP::AuthenticationError       if error[:error_id]   == 'error.request.connection.authenticationFailure'
+              raise HTTP::AuthenticationError       if error[:error_code] == -2147221503 # There was no errorId in CIC < 4.0.6
+              raise HTTP::NotFoundError, error.id   if error[:error_id]   == '-2147221496'
               raise HTTP::BadRequestError, response
             when HTTP::Status::UNAUTHORIZED
-              raise SessionIdExpectedError              if error[:error_code] == 1
-              raise AuthTokenExpectedError              if error[:error_code] == 2
-              raise HTTP::UnauthorizedError, error.to_json
+              raise SessionIdExpectedError          if error[:error_code] == 1
+              raise AuthTokenExpectedError          if error[:error_code] == 2
+              raise HTTP::AuthorizationError, error[:error_code]
+            when HTTP::Status::FORBIDDEN
+              raise RequestDeniedError
             when HTTP::Status::NOT_FOUND
-              raise HTTP::NotFoundError, error.to_json
+              raise HTTP::NotFoundError, error
             when HTTP::Status::INTERNAL
               raise RuntimeError if error[:error_code] == -2147467259
-              raise RuntimeError, error.to_json
+              raise RuntimeError, error
             else
-              raise HTTP::HTTPError, error.to_json
+              raise HTTP::HTTPError, error
           end
         end
       end

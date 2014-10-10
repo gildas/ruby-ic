@@ -106,8 +106,10 @@ module Ic
     def http_get(path: '/', data: nil, **options)
       begin
         @client.get(path: path, data: data, **options)
-      rescue HTTP::UnauthorizedError => e
-        raise InvalidSessionError, self if error[:error_code] == -2147221499
+      rescue HTTP::AuthorizationError => e
+        trace.error('http') { "Authorization Error: #{e.message}" }
+        raise ExpiredSessionError, self if e.message == '1'
+        raise InvalidSessionError, self if e.message == '-2147221499'
         raise e
       end
     end
@@ -118,8 +120,10 @@ module Ic
     def http_post(path: '/', data: nil, **options)
       begin
         @client.post(path: path, data: data, **options)
-      rescue HTTP::UnauthorizedError => e
-        raise InvalidSessionError, self if error[:error_code] == -2147221499
+      rescue HTTP::AuthorizationError => e
+        trace.error('http') { "Authorization Error: #{e.message}" }
+        raise ExpiredSessionError, self if e.message == '1'
+        raise InvalidSessionError, self if e.message == '-2147221499'
         raise e
       end
     end
@@ -130,8 +134,10 @@ module Ic
     def http_delete(path: '/', data: nil, **options)
       begin
         @client.delete(path: path, data: data, **options)
-      rescue HTTP::UnauthorizedError => e
-        raise InvalidSessionError, self if error[:error_code] == -2147221499
+      rescue HTTP::AuthorizationError => e
+        trace.error('http') { "Authorization Error: #{e.message}" }
+        raise ExpiredSessionError, self if e.message == '1'
+        raise InvalidSessionError, self if e.message == '-2147221499'
         raise e
       end
     end
@@ -142,8 +148,10 @@ module Ic
     def http_put(path: '/', data: nil, **options)
       begin
         @client.put(path: path, data: data, **options)
-      rescue HTTP::UnauthorizedError => e
-        raise InvalidSessionError, self if error[:error_code] == -2147221499
+      rescue HTTP::AuthorizationError => e
+        trace.error('http') { "Authorization Error: #{e.message}" }
+        raise ExpiredSessionError, self if e.message == '1'
+        raise InvalidSessionError, self if e.message == '-2147221499'
         raise e
       end
     end

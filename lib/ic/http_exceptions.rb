@@ -19,13 +19,13 @@ module Ic
     class AuthenticationError < HTTPError ; end
 
     # This Exception is raised when the {Client} is not authorized on the server
-    class UnauthorizedError < HTTPError ; end
+    class AuthorizationError < HTTPError ; end
 
-    # This Exception is raised when the {Client} used a {Session} that is expired
-    class SessionIdExpectedError < UnauthorizedError ; end
+    # This Exception is raised when the server forbid a request from the client
+    class RequestDeniedError < AuthorizationError ; end
 
     # This Exception is raised when the {Client} did not provide a token in its request
-    class AuthTokenExpectedError < UnauthorizedError ; end
+    class AuthTokenExpectedError < ArgumentError ; end
 
     # This Exception is raised when the {Client} received too many redirection requests
     class TooManyRedirectionsError < HTTPError ; end

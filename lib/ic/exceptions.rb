@@ -1,5 +1,3 @@
-require 'ic/http_exceptions'
-
 module Ic
   # This exception is raised when a method is expecting a parameter, but it was missing
   class MissingArgumentError < ArgumentError ; end
@@ -10,8 +8,11 @@ module Ic
   # This Exception is raised when the the {Session} is missing
   class MissingSessionError < ArgumentError ; end
 
-  # This Exception is raised when the an invalid {Session} is used
-  class InvalidSessionError < HTTP::UnauthorizedError ; end
+  # This Exception is raised when an invalid {Session} is used
+  class InvalidSessionError < ArgumentError ; end
+
+  # This Exception is raised when the {Session} is expired
+  class ExpiredSessionError < ArgumentError ; end
 
   # This exception is raised when an object is instanciated from JSON but has the wrong __type
   class InvalidTypeError < ArgumentError ; end
