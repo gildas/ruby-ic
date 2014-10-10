@@ -43,7 +43,8 @@ module Ic
       # Sample results: {{{2
       # {:content_type=>"application/vnd.inin.icws+JSON; charset=utf-8", :configuration_id=>{:id=>"gcadmin", :display_name=>"Administrator: Gildas Cherruel", :uri=>"/configuration/users/gcadmin"}}
       # Sample results when select='*': {{{3
-      # {:content_type=>"application/vnd.inin.icws+JSON; charset=utf-8",
+      # {
+      #  :content_type=>"application/vnd.inin.icws+JSON; charset=utf-8",
       #  :configuration_id=> {:id=>"gcadmin", :display_name=>"Administrator: Gildas Cherruel", :uri=>"/configuration/users/gcadmin"},
       #  :auto_answer_acd_interactions=>false, :auto_answer_non_acd_interactions=>false, :cost=>0,
       #  :created_date=>"20120228T093817Z", :last_modified_date=>"20140501T064618Z",
@@ -345,10 +346,12 @@ module Ic
     end
 
     # Creates a new User on the CIC Server
-    def create(session: nil, id: nil, **options)
+    def self.create(session: nil, id: nil, display_name: nil, **options)
       raise MissingSessionError        unless session
       raise MissingArgumentError, 'id' unless id
-      data = { userId: id }.merge(options)
+      configuration_id = { id: id }
+      configuration_id[:display_name] = display_name unless display_name.nil?
+      data = { configuration_id: configuration_id }.merge(options)
       session.http_post path: "/icws/#{session.id}/configuration/users", data: data
     end
 

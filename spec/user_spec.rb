@@ -28,7 +28,7 @@ describe Ic::User do
 
     specify 'should get extra configuration of logged in user' do |example|
       @logger.info('Example') { @logger.banner(example.description) }
-      user = Ic::User.find(session: @session, id: @session.user.id, select: ['*'], rights_filter: Ic::RightsFilter::LOGGEDINUSER)
+      user = Ic::User.find(session: @session, id: @session.user.id, select: ['homeSite'], rights_filter: Ic::RightsFilter::LOGGEDINUSER)
       expect(user).to be_truthy
       expect(user.id).to eq @session.user.id
     end
