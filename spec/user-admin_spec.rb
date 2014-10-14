@@ -26,4 +26,15 @@ describe Ic::User do
       expect(user.id).to eq 'tempuser'
     end
   end
+
+  context('[ADMIN] User Deletion') do
+    specify 'should be able to delete a user' do |example|
+      @logger.info('Example') { @logger.banner(example.description) }
+      user = Ic::User.find(session: @session, id: 'tempuser')
+      expect(user).to be_truthy
+      expect(user.id).to eq 'tempuser'
+      user.delete
+      expect(user.id).to be nil
+    end
+  end
 end
