@@ -74,6 +74,8 @@ module Ic
     #
     # This does not create new users in CIC! Use {User.create} for that
     #
+    # All options that do not belong to {Logger} or {HTTP::Client} will become accessors.
+    #
     # @param session      [Session] The Session used by this object.
     # @param id           [String]  The User Identifier
     # @param display_name [String]  The USer Display name
@@ -94,7 +96,7 @@ module Ic
         @location = options[:uri]
       end
       options.each_pair do |key, value|
-        next if [:logger, :content_type, :configuration_id, :default].include? key
+        next if [:logger, :log_to, :log_mode, :log_level, :log_progname, :shift_age, :shift_size, :log_formatter, :default, :content_type, :configuration_id].include? key
         trace.debug('user') { "Adding new attribute #{key} with value: #{value} (#{value.class})" }
         case value
           when TrueClass, FalseClass then key   = (key.to_s + '?').to_sym
