@@ -5,7 +5,10 @@ describe Ic::User do
   before(:context) do
     @logger  = Ic::Logger.create(log_to: "tmp/test-#{described_class}-admin.log", log_mode: 'w', log_level: Logger::DEBUG)
     @logger.info('Group') { @logger.banner(described_class.to_s) }
-    @session = Ic::Session.connect(from: 'spec/login-admin.json', log_to: @logger)
+    options = load_config('spec/login.json')
+    options[:user]     = options[:admin_user]     if options.include?(:admin_user)
+    options[:password] = options[:admin_password] if options.include?(:admin_password)
+    @session = Ic::Session.connect(log_to: @logger, **options)
     expect(@session).to be_truthy
     expect(@session.connected?).to be true
   end
