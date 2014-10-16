@@ -1,5 +1,6 @@
 module Ic
-  class RightsFilter
+  # This module contains the security rights used when querying the CIC configuration.
+  module RightsFilter
     VIEW = "view"
     ADMIN = "admin"
     LOGGEDINUSER = "loggedInUser"
