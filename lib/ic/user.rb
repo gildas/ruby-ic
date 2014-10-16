@@ -116,6 +116,10 @@ module Ic
               value
             end
           end
+# If we want to allow modifications
+#          define_method(key.to_s + '=') do |rhs|
+#            ~~~value = rhs
+#          end
         end
       end
       raise MissingArgumentError, 'id' unless @id
