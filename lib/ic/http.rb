@@ -28,7 +28,6 @@ module Ic
       # @option options [Fixnum] connect_timeout (60)  See {HTTPClient}
       # @option options [Fixnum] send_timeout    (120) See {HTTPClient}
       # @option options [Fixnum] receive_timeout (60)  See {HTTPClient}
-      # @option options [Fixnum] connect_retry   (1)   See {HTTPClient}
       # @return         [Client] the client connection
       # @see http://www.iso.org/iso/home/standards/language_codes.htm Language codes (ISO 639-1)
       # @see http://www.iso.org/iso/country_codes.htm Country codes (ISO 3166)
@@ -46,7 +45,6 @@ module Ic
         @client.connect_timeout = options[:connect_timeout] ||  60
         @client.send_timeout    = options[:send_timeout]    || 120
         @client.receive_timeout = options[:receive_timeout] ||  60
-        @client.connect_retry   = options[:connect_retry]   ||   1
       end
 
       # Assigns a new server to connect
