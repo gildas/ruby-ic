@@ -58,7 +58,7 @@ module Ic
     #
     # @param session      [Session] The Session used by this object.
     # @param id           [String]  The User Identifier
-    # @param display_name [String]  The USer Display name
+    # @param display_name [String]  The User Display name
     # @param options      [Hash]    Extra options
     def self.create(session: nil, id: nil, display_name: nil, **options)
       raise MissingSessionError        unless session
@@ -67,6 +67,17 @@ module Ic
       configuration_id[:display_name] = display_name unless display_name.nil?
       data = { configuration_id: configuration_id }.merge(options)
       results = session.http_post path: "/icws/#{session.id}/configuration/users", data: data
+      trace.debug('user') { "Results: #{results}" }
+    end
+
+    # Deletes a User from the CIC Server
+    #
+    # @param session      [Session] The Session used by this object.
+    # @param id           [String]  The User Identifier
+    def self.delete(session: nil, id: nil)
+      raise MissingSessionError        unless session
+      raise MissingArgumentError, 'id' unless id
+      results = session.http_delete path: "/icws/#{session.id}/configuration/users/#{id}"
       trace.debug('user') { "Results: #{results}" }
     end
 
@@ -124,6 +135,16 @@ module Ic
       end
       raise MissingArgumentError, 'id' unless @id
       logger.add_context(user: @id)
+    end
+
+    # Deletes the current User from the CIC Server
+    #
+    def delete
+      results = @session.http_delete path: "/icws/#{@session.id}/configuration/users/#{@id}"
+      trace.debug('user') { "Results: #{results}" }
+# nullify all instance variables
+      @session = @id = nil
+      nil
     end
 
     # Queries the CIC Server for the User's Status
