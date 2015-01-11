@@ -1,3 +1,5 @@
+[![gildas/ruby-ic API Documentation](https://www.omniref.com/github/gildas/ruby-ic.png)](https://www.omniref.com/github/gildas/ruby-ic)
+
 ruby-ic
 =======
 
